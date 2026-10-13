@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- N/A
+- **CRM-817 — campaigns go through the CRM.** `campaignsService` calls `/api/v1/campaigns*` on the CRM API, which proxies to evo-flow with the account and the RBAC gate, like journeys and segments. The build no longer reads `VITE_EVOFLOW_API_URL`, so deployments can drop it. ⚠️ Needs the `evo-ai-crm-community` release that serves `/api/v1/campaigns`: against an older CRM the campaigns screen gets 404.
 
 ### Removed
 
