@@ -17,10 +17,36 @@ vi.mock('@/services/core/api', () => ({
   },
 }));
 
+// The direct evo-flow client must receive ZERO calls: segments go through the
+// CRM proxy. It is mocked so a stale reference fails here instead of reaching
+// the network.
+const mockEvoFlow = {
+  get: vi.fn(),
+  post: vi.fn(),
+  put: vi.fn(),
+  delete: vi.fn(),
+};
+vi.mock('@/services/core/apiEvoFlow', () => ({
+  default: {
+    get: (...args: unknown[]) => mockEvoFlow.get(...args),
+    post: (...args: unknown[]) => mockEvoFlow.post(...args),
+    put: (...args: unknown[]) => mockEvoFlow.put(...args),
+    delete: (...args: unknown[]) => mockEvoFlow.delete(...args),
+  },
+}));
+
 import { segmentsService } from './segmentsService';
+
+const expectNoEvoFlowCalls = () => {
+  expect(mockEvoFlow.get).not.toHaveBeenCalled();
+  expect(mockEvoFlow.post).not.toHaveBeenCalled();
+  expect(mockEvoFlow.put).not.toHaveBeenCalled();
+  expect(mockEvoFlow.delete).not.toHaveBeenCalled();
+};
 
 const resetMocks = () => {
   Object.values(mockApi).forEach((fn) => fn.mockReset());
+  Object.values(mockEvoFlow).forEach((fn) => fn.mockReset());
 };
 
 describe('segmentsService.previewSegment', () => {
@@ -42,6 +68,7 @@ describe('segmentsService.previewSegment', () => {
     expect(mockApi.post).toHaveBeenCalledWith('/segments/preview', { definition });
     expect(result.count).toBe(7);
     expect(result.sample).toEqual([{ id: 'c1' }, { id: 'c2' }]);
+    expectNoEvoFlowCalls();
   });
 
   it('unwraps a { success, data } envelope when present', async () => {
@@ -60,7 +87,7 @@ describe('segmentsService — EVO-1569 proxy migration', () => {
   beforeEach(resetMocks);
   afterEach(() => vi.clearAllMocks());
 
-  it('deleteSegment → api.delete /segments/:id', async () => {
+  it('deleteSegment → api.delete /segments/:id (not apiEvoFlow)', async () => {
     mockApi.delete.mockResolvedValueOnce({ data: { id: 'seg-1', deleted: true } });
 
     const result = await segmentsService.deleteSegment('seg-1');
@@ -68,24 +95,27 @@ describe('segmentsService — EVO-1569 proxy migration', () => {
     expect(mockApi.delete).toHaveBeenCalledTimes(1);
     expect(mockApi.delete).toHaveBeenCalledWith('/segments/seg-1');
     expect(result).toEqual({ id: 'seg-1', deleted: true });
+    expectNoEvoFlowCalls();
   });
 
   it('deleteSegment resolves on an empty/204 body (AC6)', async () => {
     mockApi.delete.mockResolvedValueOnce({ data: null });
 
     await expect(segmentsService.deleteSegment('seg-1')).resolves.toBeNull();
+    expectNoEvoFlowCalls();
   });
 
-  it('recomputeSegment → api.post /segments/:id/recompute', async () => {
+  it('recomputeSegment → api.post /segments/:id/recompute (not apiEvoFlow)', async () => {
     mockApi.post.mockResolvedValueOnce({ data: {} });
 
     await segmentsService.recomputeSegment('seg-1');
 
     expect(mockApi.post).toHaveBeenCalledTimes(1);
     expect(mockApi.post).toHaveBeenCalledWith('/segments/seg-1/recompute', {});
+    expectNoEvoFlowCalls();
   });
 
-  it('recomputeAllSegments → api.post /segments/recompute-all', async () => {
+  it('recomputeAllSegments → api.post /segments/recompute-all (not apiEvoFlow)', async () => {
     mockApi.post.mockResolvedValueOnce({
       data: { results: [], totalProcessingTimeMs: 5 },
     });
@@ -95,9 +125,10 @@ describe('segmentsService — EVO-1569 proxy migration', () => {
     expect(mockApi.post).toHaveBeenCalledTimes(1);
     expect(mockApi.post).toHaveBeenCalledWith('/segments/recompute-all', {});
     expect(result).toEqual({ results: [], totalProcessingTimeMs: 5 });
+    expectNoEvoFlowCalls();
   });
 
-  it('getSegmentContactIds → api.get /segments/:id/contact-ids', async () => {
+  it('getSegmentContactIds → api.get /segments/:id/contact-ids (not apiEvoFlow)', async () => {
     mockApi.get.mockResolvedValueOnce({
       data: { contactIds: ['c1'], total: 1, limit: 50, offset: 0 },
     });
@@ -109,6 +140,7 @@ describe('segmentsService — EVO-1569 proxy migration', () => {
       params: { limit: 50, offset: 0 },
     });
     expect(result).toEqual({ contactIds: ['c1'], total: 1, limit: 50, offset: 0 });
+    expectNoEvoFlowCalls();
   });
 
   it('getContactSegments uses api.get with snake_case event_type=segment (AC4)', async () => {
@@ -124,6 +156,7 @@ describe('segmentsService — EVO-1569 proxy migration', () => {
     );
     expect(eventsCall).toBeDefined();
     expect(eventsCall?.[1]).toEqual({ params: { event_type: 'segment', limit: 100 } });
+    expectNoEvoFlowCalls();
   });
 
   it('getContactSegments derives active segments from segment_entered events', async () => {
@@ -151,6 +184,7 @@ describe('segmentsService — EVO-1569 proxy migration', () => {
 
     expect(result.segmentIds).toEqual(['seg-active']);
     expect(result.total).toBe(1);
+    expectNoEvoFlowCalls();
   });
 
   it('getContactSegments rethrows auth failures (401/403) instead of masking them', async () => {
