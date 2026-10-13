@@ -316,6 +316,23 @@ describe('AgentChannelsTab', () => {
     expect(await within(dialog).findByText('Instagram')).toBeInTheDocument();
   });
 
+  // The channel's own agent tab is read-only, so a channel left off this list gets no agent.
+  it('offers the channels past the first page', async () => {
+    const page = (n: number, inboxes: Inbox[]) => ({
+      data: inboxes,
+      meta: { pagination: { page: n, page_size: 200, total: 2, total_pages: 2 } },
+    });
+    inboxesList
+      .mockResolvedValueOnce(page(1, [inbox('in-first', 'Canal A')]))
+      .mockResolvedValueOnce(page(2, [inbox('in-second', 'Canal Z')]));
+    await renderTab();
+
+    const dialog = await openModal();
+    expect(await within(dialog).findByText('Canal Z')).toBeInTheDocument();
+    expect(within(dialog).getByText('Canal A')).toBeInTheDocument();
+    expect(inboxesList).toHaveBeenLastCalledWith({ page: 2, per_page: 200 });
+  });
+
   it('lists channels by the name the user gave them, not the stored slug', async () => {
     inboxesList.mockResolvedValue({
       data: [inbox('in-free', 'canal-instagram', { display_name: 'Canal Instagram' })],

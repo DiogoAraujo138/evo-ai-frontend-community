@@ -106,8 +106,17 @@ export default function AgentChannelsTab({ agent, onOpenAgentConfiguration }: Ag
     setIsLoadingInboxes(true);
     setInboxesLoadFailed(false);
     try {
-      const response = await InboxesService.list({ per_page: 200 });
-      setAccountInboxes(response.data || []);
+      // Every page: this modal is the only place a channel gets an agent.
+      const inboxes: Inbox[] = [];
+      let page = 1;
+      let totalPages = 1;
+      do {
+        const response = await InboxesService.list({ page, per_page: 200 });
+        inboxes.push(...(response.data || []));
+        totalPages = Number(response.meta?.pagination?.total_pages) || 1;
+        page += 1;
+      } while (page <= totalPages);
+      setAccountInboxes(inboxes);
     } catch (error) {
       console.error('Error loading channels:', error);
       setInboxesLoadFailed(true);

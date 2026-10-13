@@ -378,7 +378,6 @@ export default function AgentBotInboxSettingsFields({
             <Select
               value={facebookInteractionType}
               onValueChange={(type: 'comments_only' | 'messages_only' | 'both') =>
-                // Comment replies follow the interaction type, as on the channel screen.
                 update({
                   facebook_interaction_type: type,
                   facebook_comment_replies_enabled: type === 'comments_only' || type === 'both',
