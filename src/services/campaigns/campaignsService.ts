@@ -1,4 +1,4 @@
-import api from '@/services/core/apiEvoFlow';
+import api from '@/services/core/api';
 import { extractData, extractResponse } from '@/utils/apiHelpers';
 import type {
   Campaign,

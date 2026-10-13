@@ -17,9 +17,9 @@ vi.mock('@/services/core/api', () => ({
   },
 }));
 
-// The direct evo-flow instance must receive ZERO calls after the migration
-// (EVO-1569 AC1). It is still mocked in case any stale reference remains, so
-// the assertions below fail loudly rather than hitting the network.
+// The direct evo-flow client must receive ZERO calls: segments go through the
+// CRM proxy. It is mocked so a stale reference fails here instead of reaching
+// the network.
 const mockEvoFlow = {
   get: vi.fn(),
   post: vi.fn(),
