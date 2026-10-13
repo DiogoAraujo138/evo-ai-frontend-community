@@ -870,6 +870,8 @@
       "active": "Ativado",
       "configure": "Configurar",
       "notAvailable": "Em breve",
+      "credentialMissing": "Sem credencial",
+      "googleCredentialMissing": "Falta a credencial do Google. Registe o Client ID e o Client Secret nas integrações do CRM.",
       "elevenlabs": {
         "description": "Com ElevenLabs você da a capacidade do seu agente responder seus clientes em áudio, tornando ainda mais humanizado.",
         "configTitle": "Configurar ElevenLabs",

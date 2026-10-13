@@ -89,8 +89,9 @@ const IntegrationsSection = ({
   };
 
   // These carry the user's own credential, so they never depend on an admin-wide one.
-  // The "coming soon" branch only applies to the commented-out integrations below.
-  const ALWAYS_AVAILABLE_INTEGRATIONS = ['elevenlabs', 'knowledge-nexus', 'google-calendar', 'google-sheets'];
+  // Google does: the processor reads the OAuth Client ID/Secret from the CRM config.
+  const ALWAYS_AVAILABLE_INTEGRATIONS = ['elevenlabs', 'knowledge-nexus'];
+  const GOOGLE_INTEGRATIONS = ['google-calendar', 'google-sheets'];
 
   const availableIntegrations: Integration[] = [
     {
@@ -157,6 +158,8 @@ const IntegrationsSection = ({
                 const hasCredentials =
                   isAlwaysAvailable || (available[integration.id] ?? false);
                 const connected = isConnected(integration.id);
+                const missingGoogleCredential =
+                  !hasCredentials && GOOGLE_INTEGRATIONS.includes(integration.id);
 
                 const openConfigDialog = () => {
                   if (integration.id === 'elevenlabs') {
@@ -198,7 +201,9 @@ const IntegrationsSection = ({
                     disabled
                   >
                     <AlertCircle className="h-4 w-4" />
-                    {t('edit.integrations.notAvailable') || 'Em breve'}
+                    {missingGoogleCredential
+                      ? t('edit.integrations.credentialMissing') || 'Sem credencial'
+                      : t('edit.integrations.notAvailable') || 'Em breve'}
                   </Button>
                 );
 
@@ -209,6 +214,12 @@ const IntegrationsSection = ({
                     name={integration.name}
                     description={integration.description}
                     action={action}
+                    notice={
+                      missingGoogleCredential
+                        ? t('edit.integrations.googleCredentialMissing') ||
+                          'Falta a credencial do Google. Cadastre o Client ID e o Client Secret nas integrações do CRM.'
+                        : undefined
+                    }
                   />
                 );
               })}
