@@ -48,12 +48,39 @@ const setViewportWidth = (width: number) => {
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
 };
 
+// The flex row the panel shares with the edit page. JSDOM lays nothing out, so its width
+// is stubbed and its ResizeObserver fired by hand.
+let row: HTMLDivElement;
+let rowWidth: number;
+const resizeCallbacks = new Map<Element, ResizeObserverCallback>();
+
+class RecordingResizeObserver {
+  callback: ResizeObserverCallback;
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+  }
+  observe(target: Element) {
+    resizeCallbacks.set(target, this.callback);
+  }
+  unobserve() {}
+  disconnect() {}
+}
+
+const resizeLayout = (viewport: number, nextRowWidth: number) =>
+  act(() => {
+    setViewportWidth(viewport);
+    rowWidth = nextRowWidth;
+    resizeCallbacks.get(row)?.([], {} as ResizeObserver);
+  });
+
 // Settle the provider's initial listSessions fetch inside act, so its state update does
 // not land after a synchronous test has finished.
 const settle = () => act(async () => {});
 
 const renderPanel = async () => {
-  const view = render(<AgentTestChat open onOpenChange={vi.fn()} agent={agent} />);
+  const view = render(<AgentTestChat open onOpenChange={vi.fn()} agent={agent} />, {
+    container: document.body.appendChild(row),
+  });
   await settle();
   return view;
 };
@@ -68,6 +95,10 @@ const drag = (handle: HTMLElement, fromX: number, toX: number) => {
 
 beforeEach(() => {
   setViewportWidth(1600);
+  rowWidth = 1600;
+  row = document.createElement('div');
+  Object.defineProperty(row, 'clientWidth', { configurable: true, get: () => rowWidth });
+  vi.stubGlobal('ResizeObserver', RecordingResizeObserver);
   listSessionsMock.mockResolvedValue({ data: [] });
   getSessionMessagesMock.mockResolvedValue({ data: [] });
   createSessionMock.mockResolvedValue({ session_id: SESSION.id });
@@ -77,6 +108,8 @@ beforeEach(() => {
 
 afterEach(() => {
   setViewportWidth(originalInnerWidth);
+  resizeCallbacks.clear();
+  vi.unstubAllGlobals();
   vi.clearAllMocks();
 });
 
@@ -227,16 +260,47 @@ describe('AgentTestChat', () => {
     expect(handle).toHaveAttribute('aria-valuenow', '560');
   });
 
+  it('stops widening where the edit page would drop below 600px', async () => {
+    setViewportWidth(1366);
+    rowWidth = 1078; // 1366px window minus the expanded app sidebar
+    await renderPanel();
+    const handle = getHandle();
+
+    expect(handle).toHaveAttribute('aria-valuenow', '460');
+    expect(handle).toHaveAttribute('aria-valuemax', '478');
+
+    drag(handle, 1000, 0);
+    expect(handle).toHaveAttribute('aria-valuenow', '478');
+
+    fireEvent.keyDown(handle, { key: 'End' });
+    expect(handle).toHaveAttribute('aria-valuenow', '478');
+  });
+
+  it('opens below 460px when the row cannot spare it', async () => {
+    rowWidth = 1000;
+    await renderPanel();
+
+    expect(getHandle()).toHaveAttribute('aria-valuenow', '400');
+  });
+
   it('re-applies the maximum when the window shrinks', async () => {
     await renderPanel();
     const handle = getHandle();
     drag(handle, 1000, 300);
     expect(handle).toHaveAttribute('aria-valuenow', '800');
 
-    act(() => {
-      setViewportWidth(1000);
-      window.dispatchEvent(new Event('resize'));
-    });
+    resizeLayout(1200, 1200);
+
+    expect(handle).toHaveAttribute('aria-valuenow', '600');
+    expect(handle).toHaveAttribute('aria-valuemax', '600');
+  });
+
+  it('re-applies the maximum when the row shrinks without a window resize', async () => {
+    await renderPanel();
+    const handle = getHandle();
+    drag(handle, 1000, 300);
+
+    resizeLayout(1600, 1100);
 
     expect(handle).toHaveAttribute('aria-valuenow', '500');
     expect(handle).toHaveAttribute('aria-valuemax', '500');

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent, PointerEvent } from 'react';
 import { Agent } from '@/types/agents';
 import { AgentChatProvider } from '@/contexts/agents/AgentChatContext';
@@ -14,12 +14,16 @@ interface AgentTestChatProps {
 
 const PANEL_DEFAULT_WIDTH = 460;
 const PANEL_MIN_WIDTH = 360;
+// Room kept for the edit page: what the 460px default leaves it on a 1366px screen.
+const PAGE_MIN_WIDTH = 600;
 const KEYBOARD_STEP = 16;
 
-const maxPanelWidth = () => Math.max(PANEL_MIN_WIDTH, Math.floor(window.innerWidth / 2));
+// `rowWidth` is the flex row the panel shares with the edit page.
+const maxPanelWidth = (rowWidth: number) =>
+  Math.max(PANEL_MIN_WIDTH, Math.min(Math.floor(window.innerWidth / 2), rowWidth - PAGE_MIN_WIDTH));
 
-const clampPanelWidth = (width: number) =>
-  Math.min(maxPanelWidth(), Math.max(PANEL_MIN_WIDTH, width));
+const clampPanelWidth = (width: number, max: number) =>
+  Math.min(max, Math.max(PANEL_MIN_WIDTH, width));
 
 /**
  * Side panel, not a modal: a flex sibling of the content, so the edit area shrinks and
@@ -34,18 +38,27 @@ export default function AgentTestChat({ open, onOpenChange, agent }: AgentTestCh
 
 function AgentTestChatPanel({ agent, onClose }: { agent: Agent; onClose: () => void }) {
   const { t } = useLanguage('aiAgents');
-  const [width, setWidth] = useState(() => clampPanelWidth(PANEL_DEFAULT_WIDTH));
-  const [maxWidth, setMaxWidth] = useState(maxPanelWidth);
+  const panelRef = useRef<HTMLElement>(null);
+  const [maxWidth, setMaxWidth] = useState(() => maxPanelWidth(window.innerWidth));
+  const [width, setWidth] = useState(() =>
+    clampPanelWidth(PANEL_DEFAULT_WIDTH, maxPanelWidth(window.innerWidth)),
+  );
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef<{ pointerId: number; x: number; width: number } | null>(null);
 
-  useEffect(() => {
+  // The row also shrinks when the app sidebar expands, which fires no window resize.
+  useLayoutEffect(() => {
+    const row = panelRef.current?.parentElement;
+    if (!row) return;
     const handleResize = () => {
-      setMaxWidth(maxPanelWidth());
-      setWidth(clampPanelWidth);
+      const max = maxPanelWidth(row.clientWidth);
+      setMaxWidth(max);
+      setWidth(current => clampPanelWidth(current, max));
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    handleResize();
+    const observer = new ResizeObserver(handleResize);
+    observer.observe(row);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -70,7 +83,9 @@ function AgentTestChatPanel({ agent, onClose }: { agent: Agent; onClose: () => v
   const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
     if (dragStart.current?.pointerId !== event.pointerId) return;
     // The panel sits on the right, so dragging left (smaller clientX) widens it.
-    setWidth(clampPanelWidth(dragStart.current.width + dragStart.current.x - event.clientX));
+    setWidth(
+      clampPanelWidth(dragStart.current.width + dragStart.current.x - event.clientX, maxWidth),
+    );
   };
 
   const endDrag = (event: PointerEvent<HTMLDivElement>) => {
@@ -88,12 +103,12 @@ function AgentTestChatPanel({ agent, onClose }: { agent: Agent; onClose: () => v
       ArrowLeft: current => current + KEYBOARD_STEP,
       ArrowRight: current => current - KEYBOARD_STEP,
       Home: () => PANEL_MIN_WIDTH,
-      End: () => maxPanelWidth(),
+      End: () => maxWidth,
     };
     const next = resize[event.key];
     if (!next) return;
     event.preventDefault();
-    setWidth(current => clampPanelWidth(next(current)));
+    setWidth(current => clampPanelWidth(next(current), maxWidth));
   };
 
   // Width changes at pointer rate; keep the chat (and its message history) out of that render.
@@ -111,6 +126,7 @@ function AgentTestChatPanel({ agent, onClose }: { agent: Agent; onClose: () => v
 
   return (
     <aside
+      ref={panelRef}
       style={{ '--agent-chat-width': `${width}px` } as CSSProperties}
       className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-background md:relative md:inset-auto md:z-auto md:w-(--agent-chat-width) md:flex-shrink-0 md:overflow-visible md:border-l md:border-border"
     >
