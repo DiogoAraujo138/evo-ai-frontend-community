@@ -1590,6 +1590,7 @@
   },
   "chat": {
     "newConversation": "New Conversation",
+    "resizePanel": "Resize panel",
     "searchConversations": "Search conversations...",
     "conversations": "Conversations",
     "noConversations": "No conversations",

@@ -1568,6 +1568,7 @@
   },
   "chat": {
     "newConversation": "Nova Conversa",
+    "resizePanel": "Redimensionar painel",
     "searchConversations": "Buscar conversas...",
     "conversations": "Conversas",
     "noConversations": "Nenhuma conversa",
