@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ElevenLabsConfigDialog from './ElevenLabsConfigDialog';
 
@@ -53,6 +53,38 @@ describe('ElevenLabsConfigDialog', () => {
     await typeKey('abc');
 
     expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: APPLY }).hasAttribute('disabled')).toBe(true);
+  });
+
+  it('does not let a late answer for the previous key validate the current one', async () => {
+    const pending: Record<string, (response: unknown) => void> = {};
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        (_url: string, init: { headers: Record<string, string> }) =>
+          new Promise(resolve => {
+            pending[init.headers['xi-api-key']] = resolve;
+          })
+      )
+    );
+    renderDialog();
+    const input = screen.getByLabelText('edit.integrations.elevenlabs.apiKey');
+
+    fireEvent.change(input, { target: { value: 'sk_previous_key_1' } });
+    fireEvent.change(input, { target: { value: 'sk_current_key_22' } });
+    await act(async () => {
+      pending.sk_previous_key_1({
+        ok: true,
+        json: async () => ({ voices: [{ voice_id: 'voice-1', name: 'Rachel' }] }),
+      });
+    });
+
+    expect(screen.getByRole('button', { name: APPLY }).hasAttribute('disabled')).toBe(true);
+
+    await act(async () => {
+      pending.sk_current_key_22({ ok: false, status: 401 });
+    });
+
     expect(screen.getByRole('button', { name: APPLY }).hasAttribute('disabled')).toBe(true);
   });
 
