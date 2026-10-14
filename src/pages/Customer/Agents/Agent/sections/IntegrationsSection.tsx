@@ -38,7 +38,7 @@ const IntegrationsSection = ({
 
   // `available` = the integration exists in the tenant; `isConnected` = this agent
   // has already enabled it.
-  const { available, isCheckingIntegrations, isConnected, reloadConfigs } =
+  const { available, availabilityFailed, isCheckingIntegrations, isConnected, reloadConfigs } =
     useIntegrations(agentId);
 
   // Writes straight to the backend instead of waiting for "Save": the source of truth
@@ -158,8 +158,11 @@ const IntegrationsSection = ({
                 const hasCredentials =
                   isAlwaysAvailable || (available[integration.id] ?? false);
                 const connected = isConnected(integration.id);
-                const missingGoogleCredential =
+                const googleBlocked =
                   !hasCredentials && GOOGLE_INTEGRATIONS.includes(integration.id);
+                // A failed check says nothing about the credential, so don't claim it is missing.
+                const missingGoogleCredential = googleBlocked && !availabilityFailed;
+                const googleCredentialUnchecked = googleBlocked && availabilityFailed;
 
                 const openConfigDialog = () => {
                   if (integration.id === 'elevenlabs') {
@@ -203,7 +206,9 @@ const IntegrationsSection = ({
                     <AlertCircle className="h-4 w-4" />
                     {missingGoogleCredential
                       ? t('edit.integrations.credentialMissing') || 'Sem credencial'
-                      : t('edit.integrations.notAvailable') || 'Em breve'}
+                      : googleCredentialUnchecked
+                        ? t('edit.integrations.credentialUnchecked') || 'Não verificado'
+                        : t('edit.integrations.notAvailable') || 'Em breve'}
                   </Button>
                 );
 
@@ -218,7 +223,10 @@ const IntegrationsSection = ({
                       missingGoogleCredential
                         ? t('edit.integrations.googleCredentialMissing') ||
                           'Falta a credencial do Google. Cadastre o Client ID e o Client Secret nas integrações do CRM.'
-                        : undefined
+                        : googleCredentialUnchecked
+                          ? t('edit.integrations.googleCredentialUnchecked') ||
+                            'Não foi possível verificar a credencial do Google. Recarregue a página para tentar de novo.'
+                          : undefined
                     }
                   />
                 );

@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import IntegrationsSection from './IntegrationsSection';
 
 vi.mock('@/hooks/useLanguage', () => ({
@@ -7,9 +7,11 @@ vi.mock('@/hooks/useLanguage', () => ({
 }));
 
 let available: Record<string, boolean> = {};
+let availabilityFailed = false;
 vi.mock('@/hooks/useIntegrations', () => ({
   useIntegrations: () => ({
     available,
+    availabilityFailed,
     isCheckingIntegrations: false,
     reloadConfigs: vi.fn(),
     isConnected: () => false,
@@ -25,6 +27,22 @@ const actionOf = (name: string) =>
   screen.getByText(name, { selector: 'p' }).parentElement!.parentElement!.querySelector('button')!;
 
 describe('IntegrationsSection', () => {
+  beforeEach(() => {
+    availabilityFailed = false;
+  });
+
+  it('does not blame a missing credential when the availability check failed', () => {
+    available = {};
+    availabilityFailed = true;
+    render(<IntegrationsSection agentId="agent-1" />);
+
+    expect(actionOf('Google Calendar').hasAttribute('disabled')).toBe(true);
+    expect(actionOf('Google Sheets').hasAttribute('disabled')).toBe(true);
+    expect(screen.getAllByText('edit.integrations.credentialUnchecked')).toHaveLength(2);
+    expect(screen.getAllByText('edit.integrations.googleCredentialUnchecked')).toHaveLength(2);
+    expect(screen.queryByText('edit.integrations.googleCredentialMissing')).toBeNull();
+  });
+
   it('blocks Google Calendar and Sheets when the Google credential is not configured', () => {
     available = { 'google-calendar': false, 'google-sheets': false };
     render(<IntegrationsSection agentId="agent-1" />);
