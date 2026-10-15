@@ -306,6 +306,22 @@ describe('AiCredentials — status toggle in the edit form (CRM-42)', () => {
     expect(payload).not.toHaveProperty('key_value');
   });
 
+  it('leaves is_active out when the toggle is flipped back to the stored state', async () => {
+    const user = userEvent.setup();
+    updateApiKey.mockResolvedValue(OPENAI_KEY);
+    render(<AiCredentials />);
+
+    await user.click(await editRow('Producao'));
+    const toggle = await screen.findByRole('switch', { name: 'form.labels.active' });
+    await user.click(toggle);
+    await user.click(toggle);
+    expect(toggle).toBeChecked();
+    await user.click(screen.getByText('actions.save'));
+
+    await waitFor(() => expect(updateApiKey).toHaveBeenCalled());
+    expect(updateApiKey.mock.calls[0][1]).not.toHaveProperty('is_active');
+  });
+
   it('closes the form on a click outside', async () => {
     const user = userEvent.setup();
     render(<AiCredentials />);

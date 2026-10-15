@@ -67,7 +67,7 @@ const EMPTY_DRAFT: CredentialDraft = {
 
 /** `h-auto` cancels the fixed height of the design-system Button, which otherwise wins. */
 const PRIMARY_BUTTON_CLASS =
-  'h-auto rounded-[9px] px-[18px] py-[11px] text-sm font-semibold shadow-md shadow-primary/25 hover:bg-primary/85';
+  'h-auto rounded-[9px] px-[18px] py-[11px] text-sm font-semibold shadow-md shadow-primary/25 hover:bg-primary hover:brightness-90';
 
 const SECONDARY_BUTTON_CLASS =
   'h-auto rounded-[9px] border-border bg-card px-[18px] py-2.5 text-sm font-semibold text-foreground shadow-none hover:bg-muted';
