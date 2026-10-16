@@ -5,6 +5,7 @@ import {
   Upload,
   Trash2,
   Merge,
+  Megaphone,
 } from 'lucide-react';
 import { BaseHeader, HeaderAction, HeaderFilter } from '@/components/base';
 import { usePermissions } from '@/contexts/PermissionsContext';
@@ -20,6 +21,8 @@ interface ContactsHeaderProps {
   onFilter: () => void;
   onBulkDelete: () => void;
   onMergeContacts: () => void;
+  /** Shown only when there is a filter or a selection to build an audience from. */
+  onCreateCampaign?: () => void;
   onClearSelection: () => void;
   activeFilters?: HeaderFilter[];
   showFilters?: boolean;
@@ -36,6 +39,7 @@ export default function ContactsHeader({
   onFilter,
   onBulkDelete,
   onMergeContacts,
+  onCreateCampaign,
   onClearSelection,
   activeFilters = [],
   showFilters = true,
@@ -50,7 +54,18 @@ export default function ContactsHeader({
     dataTour: 'contacts-new-button',
   } : undefined;
 
+  const campaignAction: HeaderAction[] =
+    onCreateCampaign && isReady && can('campaigns', 'create')
+      ? [{
+          label: t('header.createCampaign'),
+          icon: <Megaphone className="h-4 w-4" />,
+          onClick: onCreateCampaign,
+          variant: 'outline' as const,
+        }]
+      : [];
+
   const secondaryActions: HeaderAction[] = [
+    ...campaignAction,
     ...(isReady && can('contacts', 'read') ? [{
       label: t('header.export'),
       icon: <Download className="h-4 w-4" />,
@@ -66,6 +81,7 @@ export default function ContactsHeader({
   ];
 
   const bulkActions: HeaderAction[] = [
+    ...campaignAction,
     ...(selectedCount >= 2 && isReady && can('contacts', 'update')
       ? [
           {

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { CampaignType, CampaignChannelType, CampaignStatus } from '@/types/campaigns';
 import { campaignsService } from '@/services/campaigns';
 
@@ -24,9 +24,11 @@ interface WizardData {
   triggerConfig?: CampaignTriggerConfig;
 
   // Step 2: AUDIÊNCIA
-  contact_selection: 'all' | 'segments' | 'tags' | '';
+  contact_selection: 'all' | 'segments' | 'tags' | 'contacts' | '';
   segment_ids?: string[];
   tag_ids?: string[];
+  /** Snapshot of contacts picked in the contacts view (contact_selection 'contacts'). */
+  contact_ids?: string[];
   estimated_contacts?: number;
 
   // Step 3: CONTEÚDO
@@ -91,7 +93,16 @@ export default function NewCampaign() {
   const isEditMode = !!campaignId;
 
   const [currentStep, setCurrentStep] = useState(1);
-  const [wizardData, setWizardData] = useState<WizardData>(INITIAL_DATA);
+  const location = useLocation();
+  const [wizardData, setWizardData] = useState<WizardData>(() => {
+    // Launched from the contacts view with a list of contacts to send to.
+    const ids = (location.state as { audienceContactIds?: unknown } | null)?.audienceContactIds;
+    if (Array.isArray(ids) && ids.length > 0) {
+      const contactIds = ids.filter((id): id is string => typeof id === 'string' && id.length > 0);
+      return { ...INITIAL_DATA, contact_selection: 'contacts', contact_ids: contactIds, estimated_contacts: contactIds.length };
+    }
+    return INITIAL_DATA;
+  });
   const [loadingCampaign, setLoadingCampaign] = useState(false);
   const [currentCampaignName, setCurrentCampaignName] = useState('');
   const [existingSteps, setExistingSteps] = useState<Record<string, any>>({});
@@ -217,6 +228,7 @@ export default function NewCampaign() {
           contact_selection: (wizardState.contact_selection || audienceState.contact_selection || inferredContactSelection) as WizardData['contact_selection'],
           segment_ids: segmentIds,
           tag_ids: tagIds,
+          contact_ids: Array.isArray(wizardState.contact_ids) ? wizardState.contact_ids : [],
           estimated_contacts: campaign.contacts_count || 0,
           inbox_id: wizardState.inbox_id || contentState.inbox_id || campaign.inbox_id || '',
           template_ids: templateIds,
@@ -281,6 +293,7 @@ export default function NewCampaign() {
         contact_selection: wizardData.contact_selection,
         segment_ids: wizardData.segment_ids || [],
         tag_ids: wizardData.tag_ids || [],
+        contact_ids: wizardData.contact_selection === 'contacts' ? wizardData.contact_ids || [] : [],
         inbox_id: wizardData.inbox_id,
         template_ids: wizardData.template_ids || [],
         schedule_option: wizardData.schedule_option,
@@ -475,6 +488,7 @@ export default function NewCampaign() {
               contact_selection: wizardData.contact_selection,
               segment_ids: wizardData.segment_ids,
               tag_ids: wizardData.tag_ids,
+              contact_ids: wizardData.contact_ids,
               estimated_contacts: wizardData.estimated_contacts,
             }}
             onChange={handleDataChange}

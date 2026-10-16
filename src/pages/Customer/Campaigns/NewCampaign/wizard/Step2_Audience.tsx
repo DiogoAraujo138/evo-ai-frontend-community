@@ -20,9 +20,10 @@ interface FilterCondition {
 
 interface Step2Props {
   data: {
-    contact_selection: 'all' | 'segments' | 'tags' | '';
+    contact_selection: 'all' | 'segments' | 'tags' | 'contacts' | '';
     segment_ids?: string[];
     tag_ids?: string[];
+    contact_ids?: string[];
     estimated_contacts?: number;
   };
   onChange: (data: Partial<Step2Props['data']>) => void;
@@ -70,6 +71,11 @@ const Step2_Audience = ({ data, onChange, onNext, onBack }: Step2Props) => {
   useEffect(() => {
     const selectedAll = data.contact_selection === 'all';
     setUseAllContacts(selectedAll);
+
+    if (data.contact_selection === 'contacts') {
+      setFilters([]);
+      return;
+    }
 
     if (selectedAll) {
       setFilters([]);
@@ -227,13 +233,15 @@ const Step2_Audience = ({ data, onChange, onNext, onBack }: Step2Props) => {
     return filter.type === 'segment' ? <Target className="h-3 w-3" /> : <TagIcon className="h-3 w-3" />;
   };
 
+  const isContactList = data.contact_selection === 'contacts' && (data.contact_ids?.length ?? 0) > 0;
+
   const handleNext = () => {
-    if (useAllContacts || filters.length > 0) {
+    if (isContactList || useAllContacts || filters.length > 0) {
       onNext();
     }
   };
 
-  const isValid = useAllContacts || filters.length > 0;
+  const isValid = isContactList || useAllContacts || filters.length > 0;
 
   return (
     <div className="flex flex-col max-w-4xl mx-auto py-6 px-6 h-full">
@@ -247,8 +255,33 @@ const Step2_Audience = ({ data, onChange, onNext, onBack }: Step2Props) => {
             </p>
           </div>
 
+          {/* Fixed list of contacts coming from the contacts view */}
+          {isContactList && (
+            <div className="flex items-start justify-between gap-3 p-4 border rounded-lg bg-muted/30">
+              <div>
+                <Label className="text-base font-semibold flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  {t('wizard.step2.contactListTitle')}
+                </Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {t('wizard.step2.contactListDescription', { count: data.contact_ids?.length ?? 0 })}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  onChange({ contact_selection: '', contact_ids: [], segment_ids: [], tag_ids: [], estimated_contacts: 0 })
+                }
+              >
+                {t('wizard.step2.contactListClear')}
+              </Button>
+            </div>
+          )}
+
           {/* All Contacts Toggle */}
-          <div className="flex items-start space-x-3 p-4 border rounded-lg">
+          <div className={`flex items-start space-x-3 p-4 border rounded-lg ${isContactList ? 'hidden' : ''}`}>
             <input
               type="checkbox"
               id="all-contacts"
@@ -268,7 +301,7 @@ const Step2_Audience = ({ data, onChange, onNext, onBack }: Step2Props) => {
           </div>
 
           {/* Filter Builder */}
-          {!useAllContacts && (
+          {!useAllContacts && !isContactList && (
             <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
               <Label className="text-base font-semibold">{t('wizard.step2.audienceFilters')}</Label>
               <p className="text-xs text-muted-foreground">

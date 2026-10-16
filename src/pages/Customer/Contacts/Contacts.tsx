@@ -618,6 +618,36 @@ export default function Contacts() {
 
   // removed unused
 
+  // Campaign from the current view: the selected rows, or else everyone matching the filters.
+  // The ids are a snapshot taken now; the wizard sends to exactly this list.
+  const MAX_CAMPAIGN_CONTACTS = 10000;
+  const handleCreateCampaign = async () => {
+    const toastId = toast.loading(t('messages.preparingCampaign'));
+    try {
+      let ids = state.selectedContactIds;
+      if (ids.length === 0) {
+        const result = await contactsService.collectFilteredContactIds(
+          buildFilterPayload(activeFilters),
+          MAX_CAMPAIGN_CONTACTS,
+        );
+        if (result.truncated) {
+          toast.error(t('messages.campaignTooManyContacts', { max: MAX_CAMPAIGN_CONTACTS }), { id: toastId });
+          return;
+        }
+        ids = result.ids;
+      }
+      if (ids.length === 0) {
+        toast.error(t('messages.campaignNoContacts'), { id: toastId });
+        return;
+      }
+      toast.dismiss(toastId);
+      navigate('/campaigns/new', { state: { audienceContactIds: ids } });
+    } catch (error) {
+      console.error('Error preparing campaign audience:', error);
+      toast.error(t('messages.campaignPrepareError'), { id: toastId });
+    }
+  };
+
   // Import/Export
   const handleImportContacts = () => {
     setImportModalOpen(true);
@@ -862,6 +892,9 @@ export default function Contacts() {
             onFilter={handleOpenFilter}
             onBulkDelete={handleBulkDelete}
             onMergeContacts={handleMergeContacts}
+            onCreateCampaign={
+              activeFilters.length > 0 || state.selectedContactIds.length > 0 ? handleCreateCampaign : undefined
+            }
             onClearSelection={() => setState(prev => ({ ...prev, selectedContactIds: [] }))}
             activeFilters={appliedFilters}
             showFilters={false}

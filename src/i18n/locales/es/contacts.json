@@ -290,6 +290,10 @@
     "confirm": "Confirmar"
   },
   "messages": {
+    "preparingCampaign": "Preparando la lista de contactos...",
+    "campaignTooManyContacts": "La lista tiene más de {{max}} contactos. Ajusta los filtros para crear la campaña.",
+    "campaignNoContacts": "No hay contactos en la lista. Ajusta los filtros o la selección.",
+    "campaignPrepareError": "No se pudo preparar la lista de contactos.",
     "loadError": "Error al cargar contactos",
     "searchError": "Error al buscar contactos",
     "createSuccess": "Contacto creado con éxito",
@@ -498,6 +502,7 @@
     "filters": "Filtros",
     "bulkDelete": "Eliminar Seleccionados",
     "mergeContacts": "Fusionar Contactos",
+    "createCampaign": "Crear campaña",
     "clearSelection": "Limpiar Selección",
     "selected": "{{count}} seleccionado",
     "selected_other": "{{count}} seleccionados"

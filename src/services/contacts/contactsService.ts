@@ -124,6 +124,31 @@ class ContactsService {
     return extractResponse<Contact>(response) as ContactsResponse;
   }
 
+  /**
+   * Collects the ids of every contact matching a filter, page by page, for building a campaign
+   * audience. When more than `maxContacts` match nothing else is fetched and `truncated` is true,
+   * so the caller can ask for a narrower filter instead of silently sending to part of the list.
+   */
+  async collectFilteredContactIds(
+    payload: ContactsFilterParams['payload'],
+    maxContacts = 10000,
+  ): Promise<{ ids: string[]; total: number; truncated: boolean }> {
+    const pageSize = 500;
+    const ids: string[] = [];
+    for (let page = 1; ; page++) {
+      const response = await this.filterContacts({ page, pageSize, payload });
+      const total = response.meta?.pagination?.total ?? 0;
+      if (total > maxContacts) return { ids: [], total, truncated: true };
+      for (const contact of response.data ?? []) {
+        if (contact?.id) ids.push(String(contact.id));
+      }
+      const totalPages = response.meta?.pagination?.total_pages ?? 1;
+      if (page >= totalPages || (response.data ?? []).length === 0) {
+        return { ids: [...new Set(ids)], total, truncated: false };
+      }
+    }
+  }
+
   // Get single contact
   async getContact(contactId: string, includeContactInboxes = true): Promise<Contact> {
     const response = await api.get(`/contacts/${contactId}`, {
