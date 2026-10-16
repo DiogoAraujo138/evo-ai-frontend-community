@@ -43,7 +43,7 @@ export function JoyrideTooltip({
               width: 6,
               height: 6,
               borderRadius: '50%',
-              background: '#00C48C',
+              background: '#2563eb',
               flexShrink: 0,
             }}
           />
@@ -104,7 +104,7 @@ export function JoyrideTooltip({
           style={{
             height: '100%',
             borderRadius: 2,
-            background: '#00C48C',
+            background: '#2563eb',
             width: `${((index + 1) / size) * 100}%`,
             transition: 'width 0.3s ease',
           }}
@@ -148,7 +148,7 @@ export function JoyrideTooltip({
             <button
               {...primaryProps}
               style={{
-                background: '#00C48C',
+                background: '#2563eb',
                 border: 'none',
                 color: '#ffffff',
                 borderRadius: '6px',

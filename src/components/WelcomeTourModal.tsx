@@ -55,7 +55,7 @@ export function WelcomeTourModal() {
       <div className="bg-background rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 flex flex-col items-center gap-6 text-center">
         <div
           className="flex items-center justify-center rounded-full w-16 h-16"
-          style={{ backgroundColor: '#00C48C' }}
+          style={{ backgroundColor: '#2563eb' }}
         >
           <Map className="h-8 w-8 text-white" />
         </div>
@@ -71,7 +71,7 @@ export function WelcomeTourModal() {
           <Button
             onClick={handleStartTour}
             className="w-full"
-            style={{ backgroundColor: '#00C48C', color: '#fff' }}
+            style={{ backgroundColor: '#2563eb', color: '#fff' }}
           >
             {t('welcome.startButton')}
           </Button>
