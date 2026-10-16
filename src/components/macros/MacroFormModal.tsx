@@ -389,7 +389,7 @@ export default function MacroFormModal({ isOpen, onClose, macro, onSuccess }: Ma
             type="submit"
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-[#00ffa7] hover:bg-[#00e693] text-black border-0 font-semibold"
+            className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white border-0 font-semibold"
           >
             {loading
               ? t('modal.buttons.saving')
