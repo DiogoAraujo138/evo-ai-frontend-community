@@ -6,7 +6,6 @@ import { getEmpresaAtual, setEmpresaAtual } from '@/lib/empresaAtual';
 const listar = vi.fn();
 vi.mock('@/services/empresas/empresasService', () => ({ listarEmpresas: () => listar() }));
 vi.mock('./AuthContext', () => ({ useAuth: () => ({ isAuthenticated: true }) }));
-vi.mock('@/components/LoadingScreen', () => ({ default: () => <div>carregando</div> }));
 
 const emp = (id: string, nome: string, ativa = true) => ({ id, nome, slug: nome.toLowerCase(), ativa, papel: 'agent' });
 
