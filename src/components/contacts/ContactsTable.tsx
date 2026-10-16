@@ -9,6 +9,8 @@ import ContactStatusBadge from './ContactStatusBadge';
 import ContactTagsList from './ContactTagsList';
 import ContactTypeBadge from './ContactTypeBadge';
 import ContactPipelinesBadge from './ContactPipelinesBadge';
+import { customColumnKey, isCustomColumn } from './contactColumns';
+import { formatCustomAttributeValue } from './contactCustomAttributes';
 
 interface ContactsTableProps {
   contacts: Contact[];
@@ -23,7 +25,18 @@ interface ContactsTableProps {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   onSort?: (column: string) => void;
+  /** Extra columns chosen by the user: created_at, last_activity_at, identifier or custom:<key>. */
+  extraColumns?: string[];
+  /** Header text of custom attribute columns, by attribute key. */
+  customAttributeLabels?: Record<string, string>;
 }
+
+// created_at / last_activity_at come from the API as epoch seconds (ISO strings are accepted too).
+const formatContactDate = (value: unknown): string => {
+  if (value === null || value === undefined || value === '') return '';
+  const date = typeof value === 'number' ? new Date(value * 1000) : new Date(String(value));
+  return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString();
+};
 
 export default function ContactsTable({
   contacts,
@@ -38,6 +51,8 @@ export default function ContactsTable({
   sortBy,
   sortOrder,
   onSort,
+  extraColumns = [],
+  customAttributeLabels = {},
 }: ContactsTableProps) {
   const { t } = useLanguage('contacts');
   const { shouldMask, maskPhone, maskEmail } = useContactPiiMasking();
@@ -55,6 +70,42 @@ export default function ContactsTable({
   //     return 'Data inválida';
   //   }
   // };
+
+  const emptyCell = <span className="text-muted-foreground">—</span>;
+
+  // Columns picked in the column picker; they sit between Status and the action button.
+  const extraTableColumns: TableColumn<Contact>[] = extraColumns.map(columnId => {
+    if (isCustomColumn(columnId)) {
+      const attributeKey = customColumnKey(columnId);
+      return {
+        key: columnId,
+        label: customAttributeLabels[attributeKey] || attributeKey,
+        sortable: false,
+        render: contact => {
+          const text = formatCustomAttributeValue(contact.custom_attributes?.[attributeKey]);
+          return text ? <span className="text-sm break-words">{text}</span> : emptyCell;
+        },
+      };
+    }
+    if (columnId === 'identifier') {
+      return {
+        key: columnId,
+        label: t('table.columns.identifier'),
+        sortable: false,
+        render: contact => (contact.identifier ? <span className="text-sm">{contact.identifier}</span> : emptyCell),
+      };
+    }
+    const isCreated = columnId === 'created_at';
+    return {
+      key: columnId,
+      label: t(isCreated ? 'table.columns.createdAt' : 'table.columns.lastActivity'),
+      sortable: false,
+      render: contact => {
+        const text = formatContactDate(isCreated ? contact.created_at : contact.last_activity_at);
+        return text ? <span className="text-sm whitespace-nowrap">{text}</span> : emptyCell;
+      },
+    };
+  });
 
   const columns: TableColumn<Contact>[] = [
     {
@@ -133,6 +184,7 @@ export default function ContactsTable({
       sortable: false,
       render: contact => <ContactStatusBadge blocked={contact.blocked} />,
     },
+    ...extraTableColumns,
     {
       key: 'startConversation',
       label: '',

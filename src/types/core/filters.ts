@@ -7,6 +7,8 @@ export interface FilterOperatorType {
 export interface FilterType {
   attributeKey: string;
   attributeI18nKey: string;
+  /** Plain text shown instead of translating attributeI18nKey (custom attributes carry a user-defined name). */
+  attributeLabel?: string;
   inputType: 'plain_text' | 'date' | 'search_select' | 'number';
   dataType: 'text' | 'number' | 'date';
   filterOperators: FilterOperatorType[];

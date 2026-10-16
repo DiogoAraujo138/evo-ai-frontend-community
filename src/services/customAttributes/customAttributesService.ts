@@ -10,10 +10,14 @@ import {
 } from '@/types/settings';
 
 class CustomAttributesService {
-  async getCustomAttributes(attributeModel?: AttributeModel): Promise<CustomAttributesResponse> {
+  async getCustomAttributes(
+    attributeModel?: AttributeModel,
+    perPage?: number,
+  ): Promise<CustomAttributesResponse> {
     const response = await api.get('/custom_attribute_definitions', {
       params: {
         attribute_model: attributeModel,
+        ...(perPage ? { per_page: perPage } : {}),
       },
     });
     return extractResponse<CustomAttributeDefinition>(response) as CustomAttributesResponse;

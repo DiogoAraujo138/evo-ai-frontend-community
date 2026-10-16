@@ -28,6 +28,11 @@ import ContactFormPage from '@/components/contacts/ContactFormPage';
 import StartConversationModal from '@/components/contacts/StartConversationModal';
 import ContactDetailPage from '@/components/contacts/ContactDetailPage';
 import ContactsFilterPopover from '@/components/contacts/ContactsFilterPopover';
+import ContactsAdvancedFilter from '@/components/contacts/ContactsAdvancedFilter';
+import ContactsColumnPicker from '@/components/contacts/ContactsColumnPicker';
+import { useExtraColumns } from '@/components/contacts/contactColumns';
+import { useContactCustomAttributes } from '@/hooks/contacts/useContactCustomAttributes';
+import { SlidersHorizontal } from 'lucide-react';
 import ContactImportModal from '@/components/contacts/ContactImportModal';
 import ContactExportModal from '@/components/contacts/ContactExportModal';
 import ContactMergeModal from '@/components/contacts/ContactMergeModal';
@@ -84,6 +89,19 @@ export default function Contacts() {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [detailsNotFound, setDetailsNotFound] = useState(false);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [advancedFilterOpen, setAdvancedFilterOpen] = useState(false);
+  const customAttributes = useContactCustomAttributes();
+  const { columns: extraColumns, toggle: toggleExtraColumn, reset: resetExtraColumns } = useExtraColumns();
+  const customAttributeLabels = useMemo(
+    () =>
+      Object.fromEntries(
+        customAttributes.map(definition => [
+          definition.attribute_key,
+          definition.attribute_display_name || definition.attribute_key,
+        ]),
+      ),
+    [customAttributes],
+  );
   const [activeFilters, setActiveFilters] = useState<BaseFilter[]>([]);
   const hasCompanyFilter = activeFilters.some(f => f.attributeKey === 'company');
   // Preload company options while the filter modal is open so the applied chip
@@ -303,7 +321,8 @@ export default function Contacts() {
 
   const resolveFilterAttributeLabel = (attributeKey: string): string => {
     const filterType = CONTACT_FILTER_TYPES.find(f => f.attributeKey === attributeKey);
-    return filterType?.attributeI18nKey ? t(filterType.attributeI18nKey) : attributeKey;
+    if (filterType?.attributeI18nKey) return t(filterType.attributeI18nKey);
+    return customAttributeLabels[attributeKey] || attributeKey;
   };
 
   const resolveFilterValueLabel = (filter: BaseFilter): string => {
@@ -850,7 +869,31 @@ export default function Contacts() {
           </div>
 
           {/* Filter Popover trigger */}
-          <div className="flex items-center justify-end mt-3 mb-2 sm:mt-6 sm:mb-3">
+          <div className="flex items-center justify-end gap-2 mt-3 mb-2 sm:mt-6 sm:mb-3">
+            <ContactsColumnPicker
+              selected={extraColumns}
+              onToggle={toggleExtraColumn}
+              onReset={resetExtraColumns}
+              customAttributes={customAttributes}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-sidebar border-sidebar-border text-sidebar-foreground hover:bg-sidebar-accent whitespace-nowrap"
+              onClick={() => setAdvancedFilterOpen(true)}
+            >
+              <SlidersHorizontal className="h-4 w-4 mr-2" />
+              {t('filter.advanced.trigger')}
+            </Button>
+            <ContactsAdvancedFilter
+              open={advancedFilterOpen}
+              onOpenChange={setAdvancedFilterOpen}
+              filters={activeFilters}
+              onFiltersChange={setActiveFilters}
+              onApplyFilters={handleApplyFilters}
+              onClearFilters={handleClearFilters}
+              customAttributes={customAttributes}
+            />
             <ContactsFilterPopover
               open={filterModalOpen}
               onOpenChange={setFilterModalOpen}
@@ -897,6 +940,8 @@ export default function Contacts() {
                 onEditContact={handleEditContact}
                 onDeleteContact={can('contacts', 'delete') ? handleDeleteContact : undefined}
                 onCreateContact={handleCreateContact}
+                extraColumns={extraColumns}
+                customAttributeLabels={customAttributeLabels}
                 sortBy={state.sortBy}
                 sortOrder={state.sortOrder}
                 onSort={column => {

@@ -358,6 +358,11 @@
     "description": "Configurez les filtres pour trouver les contacts que vous recherchez",
     "apply": "Appliquer les Filtres",
     "clear": "Effacer les Filtres",
+    "advanced": {
+      "trigger": "Filtres avancés",
+      "title": "Filtres avancés des contacts",
+      "description": "Combinez les champs du contact et les attributs personnalisés pour trouver le bon public."
+    },
     "popover": {
       "trigger": "Filtres",
       "title": "Filtrer les Contacts",
@@ -384,7 +389,9 @@
       "contains": "Contient",
       "does_not_contain": "Ne contient pas",
       "is_present": "Présent",
-      "is_not_present": "Non présent"
+      "is_not_present": "Non présent",
+      "is_greater_than": "Supérieur à",
+      "is_less_than": "Inférieur à"
     },
     "attributes": {
       "name": "Nom",
@@ -448,6 +455,14 @@
     }
   },
   "table": {
+    "columnPicker": {
+      "trigger": "Colonnes",
+      "title": "Colonnes visibles",
+      "standard": "Champs du contact",
+      "custom": "Attributs personnalisés",
+      "empty": "Aucun attribut personnalisé",
+      "reset": "Réinitialiser"
+    },
     "columns": {
       "name": "Nom",
       "email": "E-mail",
@@ -455,7 +470,10 @@
       "type": "Type",
       "labels": "Étiquettes",
       "status": "Statut",
-      "pipelines": "Pipelines"
+      "pipelines": "Pipelines",
+      "createdAt": "Créé le",
+      "lastActivity": "Dernière activité",
+      "identifier": "Identifiant"
     },
     "actions": {
       "startConversation": "Démarrer une conversation",

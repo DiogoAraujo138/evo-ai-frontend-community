@@ -190,7 +190,7 @@ export default function BaseFilterRow<T extends BaseFilter>({
                 value={filterType.attributeKey}
                 className="text-sidebar-foreground focus:bg-sidebar-accent"
               >
-                {t(filterType.attributeI18nKey)}
+                {filterType.attributeLabel ?? t(filterType.attributeI18nKey)}
               </SelectItem>
             ))}
           </SelectContent>

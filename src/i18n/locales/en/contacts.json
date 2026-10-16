@@ -366,6 +366,11 @@
     "description": "Configure filters to find the contacts you're looking for",
     "apply": "Apply Filters",
     "clear": "Clear Filters",
+    "advanced": {
+      "trigger": "Advanced filters",
+      "title": "Advanced contact filters",
+      "description": "Combine contact fields and custom attributes to find the right audience."
+    },
     "popover": {
       "trigger": "Filters",
       "title": "Filter Contacts",
@@ -392,7 +397,9 @@
       "contains": "Contains",
       "does_not_contain": "Does not contain",
       "is_present": "Present",
-      "is_not_present": "Not present"
+      "is_not_present": "Not present",
+      "is_greater_than": "Greater than",
+      "is_less_than": "Less than"
     },
     "attributes": {
       "name": "Name",
@@ -456,6 +463,14 @@
     }
   },
   "table": {
+    "columnPicker": {
+      "trigger": "Columns",
+      "title": "Visible columns",
+      "standard": "Contact fields",
+      "custom": "Custom attributes",
+      "empty": "No custom attributes yet",
+      "reset": "Reset to default"
+    },
     "columns": {
       "name": "Name",
       "email": "Email",
@@ -463,7 +478,10 @@
       "type": "Type",
       "labels": "Labels",
       "status": "Status",
-      "pipelines": "Pipelines"
+      "pipelines": "Pipelines",
+      "createdAt": "Created at",
+      "lastActivity": "Last activity",
+      "identifier": "Identifier"
     },
     "actions": {
       "startConversation": "Start conversation",
