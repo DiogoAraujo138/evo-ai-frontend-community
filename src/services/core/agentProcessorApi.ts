@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from '@/store/authStore';
 import { applySetupInterceptor } from '@/services/core/setupInterceptor';
+import { applyEmpresaInterceptor } from '@/services/core/empresaInterceptor';
 
 // Criar instância do axios específica para a API do Agent Processor
 const agentProcessorApi = axios.create({
@@ -55,6 +56,7 @@ agentProcessorApi.interceptors.response.use(
 );
 
 applySetupInterceptor(agentProcessorApi);
+applyEmpresaInterceptor(agentProcessorApi);
 
 export { agentProcessorApi };
 export default agentProcessorApi;

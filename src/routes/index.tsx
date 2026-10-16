@@ -61,6 +61,7 @@ import Journey from '@/pages/Customer/Journey/Journey';
 import JourneyFlowEditor from '@/pages/Customer/Journey/JourneyFlowEditor';
 import Campaigns from '@/pages/Customer/Campaigns/Campaigns';
 import NewCampaign from '@/pages/Customer/Campaigns/NewCampaign/NewCampaign';
+import Empresas from '@/pages/Customer/Settings/Empresas';
 import CannedResponses from '@/pages/Customer/Settings/CannedResponses';
 import AiCredentials from '@/pages/Customer/Settings/AiCredentials';
 import IntegrationCredentials from '@/pages/Customer/Settings/IntegrationCredentials';
@@ -698,6 +699,19 @@ const AppRouter = () => {
                     <PermissionRoute resource="users" action="manage">
                       <Users />
                     </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/settings/empresas"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <Empresas />
                   </MainLayout>
                 </CustomerRoute>
               </PrivateRoute>

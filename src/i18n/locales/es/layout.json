@@ -1,4 +1,35 @@
 {
+  "companies": {
+    "title": "Empresas",
+    "subtitle": "Gestione las empresas del grupo y quién puede acceder a cada una.",
+    "disabled": "El multiempresa no está activado en este servidor.",
+    "new": "Nueva empresa",
+    "namePlaceholder": "Nombre de la empresa",
+    "create": "Crear empresa",
+    "created": "Empresa creada",
+    "inactive": "inactiva",
+    "users": "Usuarios",
+    "activate": "Activar",
+    "deactivate": "Desactivar",
+    "noUsers": "Ningún usuario vinculado.",
+    "remove": "Quitar",
+    "addUser": "Vincular usuario",
+    "emailPlaceholder": "Correo del usuario",
+    "role": "Rol",
+    "add": "Vincular",
+    "linked": "Usuario vinculado",
+    "errors": {
+      "load": "No se pudieron cargar las empresas.",
+      "users": "No se pudieron cargar los usuarios.",
+      "create": "No se pudo crear la empresa (¿ya existe el nombre o slug?).",
+      "update": "No se pudo actualizar la empresa.",
+      "link": "No se pudo vincular (¿existe el usuario?).",
+      "unlink": "No se pudo quitar el vínculo."
+    }
+  },
+  "company": {
+    "label": "Empresa"
+  },
   "profile": {
     "language": "Idioma",
     "myProfile": "Mi Perfil",
@@ -105,6 +136,7 @@
     },
     "settings": {
       "account": "Cuenta",
+      "companies": "Empresas",
       "users": "Usuarios",
       "teams": "Equipos",
       "labels": "Etiquetas",

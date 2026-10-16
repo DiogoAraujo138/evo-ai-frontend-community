@@ -12,6 +12,7 @@ import {
 import { toast } from 'sonner';
 import { Header, Sidebar } from './components';
 import {
+  COMPANIES_MENU_HREF,
   getCustomerMenuItems,
   MenuItem as MenuItemType,
   filterMenuItemsByPermissions,
@@ -20,6 +21,7 @@ import {
 import { useLanguage } from '../../hooks/useLanguage';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
+import { useEmpresa } from '@/contexts/EmpresaContext';
 import { useMenuState } from '@/hooks/useMenuState';
 import { useDashboardApps } from '@/hooks/useDashboardApps';
 import { injectDashboardAppsIntoMenu } from '@/utils/injectDashboardApps';
@@ -67,16 +69,25 @@ export default function MainLayout({ children }: MainLayoutProps) {
     return getCustomerMenuItems(t);
   }, [t]);
 
+  const { habilitado: multiEmpresaLigado } = useEmpresa();
+
   const menuItems = useMemo(() => {
     const rawMenuItems = getMenuItems();
     let finalItems = filterMenuItemsByPermissions(rawMenuItems, can, canAny, canAll, user?.role?.key);
+
+    if (!multiEmpresaLigado) {
+      finalItems = finalItems.map(item => ({
+        ...item,
+        subItems: item.subItems?.filter(sub => sub.href !== COMPANIES_MENU_HREF),
+      }));
+    }
 
     if (dashboardApps.length > 0) {
       finalItems = injectDashboardAppsIntoMenu(finalItems, dashboardApps);
     }
 
     return finalItems;
-  }, [getMenuItems, can, canAny, canAll, dashboardApps, user?.role?.key]);
+  }, [getMenuItems, can, canAny, canAll, dashboardApps, user?.role?.key, multiEmpresaLigado]);
 
   // Use the custom menu state hook
   const menuState = useMenuState(menuItems, setIsMobileMenuOpen);

@@ -1,5 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 import {
+  Building2,
   User,
   LogOut,
   Cog,
@@ -30,6 +31,9 @@ import {
   ShieldCheck,
   FileText,
 } from 'lucide-react';
+
+// Rota da tela de empresas; o MainLayout a esconde quando o servidor não tem multi-empresa.
+export const COMPANIES_MENU_HREF = '/settings/empresas';
 
 export interface MenuItem {
   id?: string;
@@ -198,6 +202,13 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
         // route now agree instead of the menu linking into Não Autorizado.
         resource: 'accounts',
         action: 'read',
+      },
+      {
+        // Só para o super_admin do grupo; o MainLayout esconde quando o servidor não tem multi-empresa.
+        name: t('menu.settings.companies'),
+        href: COMPANIES_MENU_HREF,
+        icon: Building2,
+        requiredRoleKey: 'super_admin',
       },
       {
         name: t('menu.settings.users'),

@@ -3,6 +3,7 @@ import { useAuthStore } from '@/store/authStore';
 import { requestMonitor } from '@/utils/requestMonitor';
 import apiAuth from '@/services/core/apiAuth';
 import { applySetupInterceptor } from '@/services/core/setupInterceptor';
+import { applyEmpresaInterceptor } from '@/services/core/empresaInterceptor';
 
 const api = axios.create({
   baseURL: `${import.meta.env.VITE_API_URL}/api/v1`,
@@ -181,5 +182,6 @@ api.interceptors.response.use(
 );
 
 applySetupInterceptor(api);
+applyEmpresaInterceptor(api);
 
 export default api;
