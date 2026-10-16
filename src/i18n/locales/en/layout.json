@@ -1,4 +1,35 @@
 {
+  "companies": {
+    "title": "Companies",
+    "subtitle": "Manage the group's companies and who can access each one.",
+    "disabled": "Multi-company is not enabled on this server.",
+    "new": "New company",
+    "namePlaceholder": "Company name",
+    "create": "Create company",
+    "created": "Company created",
+    "inactive": "inactive",
+    "users": "Users",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "noUsers": "No users linked.",
+    "remove": "Remove",
+    "addUser": "Link user",
+    "emailPlaceholder": "User e-mail",
+    "role": "Role",
+    "add": "Link",
+    "linked": "User linked",
+    "errors": {
+      "load": "Could not load companies.",
+      "users": "Could not load users.",
+      "create": "Could not create the company (does the name or slug exist?).",
+      "update": "Could not update the company.",
+      "link": "Could not link (does the user exist?).",
+      "unlink": "Could not remove the link."
+    }
+  },
+  "company": {
+    "label": "Company"
+  },
   "profile": {
     "language": "Language",
     "myProfile": "My Profile",
@@ -105,6 +136,7 @@
     },
     "settings": {
       "account": "Account",
+      "companies": "Companies",
       "users": "Users",
       "teams": "Teams",
       "labels": "Labels",

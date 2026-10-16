@@ -27,6 +27,7 @@ import { TourFab } from '@/components/TourFab';
 import MenuItem from './MenuItem';
 import { MenuItem as MenuItemType } from '../config/menuItems';
 import { ThemeToggle } from '../../ThemeToggle';
+import { EmpresaSwitcher } from '@/components/empresa/EmpresaSwitcher';
 import { AppLogo } from '../../AppLogo';
 import { PluginSlot } from '@/plugin-host';
 
@@ -274,6 +275,7 @@ export default function Header({
         <div className="flex items-center gap-2 px-4">
           <PluginSlot id="header.left" />
           <PluginSlot id="header.right" />
+          <EmpresaSwitcher />
           <TourFab />
           {/* Theme Toggle */}
           <ThemeToggle />

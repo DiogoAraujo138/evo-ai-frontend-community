@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from '@/store/authStore';
 import { applySetupInterceptor } from '@/services/core/setupInterceptor';
+import { applyEmpresaInterceptor } from '@/services/core/empresaInterceptor';
 
 // Create a separate axios instance for evo-ai-core-service
 const evoaiApi = axios.create({
@@ -37,5 +38,6 @@ evoaiApi.interceptors.response.use(
 );
 
 applySetupInterceptor(evoaiApi);
+applyEmpresaInterceptor(evoaiApi);
 
 export default evoaiApi;

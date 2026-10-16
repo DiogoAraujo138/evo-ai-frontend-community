@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from '@/store/authStore';
 import { applySetupInterceptor } from '@/services/core/setupInterceptor';
+import { applyEmpresaInterceptor } from '@/services/core/empresaInterceptor';
 
 // Dedicated axios instance for evo-flow. Only campaigns still uses it —
 // segments and journeys (EVO-2191) go through the CRM proxy (`api`), which
@@ -34,5 +35,6 @@ evoFlowApi.interceptors.response.use(
 );
 
 applySetupInterceptor(evoFlowApi);
+applyEmpresaInterceptor(evoFlowApi);
 
 export default evoFlowApi;

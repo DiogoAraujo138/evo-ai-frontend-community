@@ -1,4 +1,35 @@
 {
+  "companies": {
+    "title": "Empresas",
+    "subtitle": "Gira as empresas do grupo e quem pode aceder a cada uma.",
+    "disabled": "O multi-empresa não está ligado neste servidor.",
+    "new": "Nova empresa",
+    "namePlaceholder": "Nome da empresa",
+    "create": "Criar empresa",
+    "created": "Empresa criada",
+    "inactive": "inativa",
+    "users": "Utilizadores",
+    "activate": "Ativar",
+    "deactivate": "Desativar",
+    "noUsers": "Nenhum utilizador associado.",
+    "remove": "Remover",
+    "addUser": "Associar utilizador",
+    "emailPlaceholder": "E-mail do utilizador",
+    "role": "Papel",
+    "add": "Associar",
+    "linked": "Utilizador associado",
+    "errors": {
+      "load": "Não foi possível carregar as empresas.",
+      "users": "Não foi possível carregar os utilizadores.",
+      "create": "Não foi possível criar a empresa (o nome ou slug já existe?).",
+      "update": "Não foi possível atualizar a empresa.",
+      "link": "Não foi possível associar (o utilizador existe?).",
+      "unlink": "Não foi possível remover a associação."
+    }
+  },
+  "company": {
+    "label": "Empresa"
+  },
   "profile": {
     "language": "Idioma",
     "myProfile": "Meu Perfil",
@@ -105,6 +136,7 @@
     },
     "settings": {
       "account": "Conta",
+      "companies": "Empresas",
       "users": "Usuários",
       "teams": "Times",
       "labels": "Etiquetas",

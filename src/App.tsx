@@ -7,6 +7,7 @@ import AppInitializer from './components/AppInitializer';
 import { GlobalConfigProvider } from './contexts/GlobalConfigContext';
 import { NotificationsProvider } from './contexts/NotificationsContext';
 import { PermissionsProvider } from './contexts/PermissionsContext';
+import { EmpresaProvider } from './contexts/EmpresaContext';
 import { UISettingsApplier } from './components/UISettingsApplier';
 import { unlockAudioContext } from '@/utils/audioNotificationUtils';
 import { PluginHostProvider, PluginSlot } from '@/plugin-host';
@@ -66,6 +67,7 @@ function App() {
             <UISettingsApplier />
             {/* RouterGuard renders the same panel and knows which paths are
                 public, so the provider must not block here (CRM-164). */}
+            <EmpresaProvider>
             <PermissionsProvider blockOnLoadFailure={false}>
             <NotificationsProvider>
               <AppInitializer>
@@ -76,6 +78,7 @@ function App() {
               </AppInitializer>
             </NotificationsProvider>
             </PermissionsProvider>
+            </EmpresaProvider>
           </GlobalConfigProvider>
         </DarkModeProvider>
       </AuthProvider>

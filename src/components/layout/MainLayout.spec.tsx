@@ -27,6 +27,7 @@ vi.mock('@/utils/injectDashboardApps', () => ({
 }));
 
 vi.mock('./config/menuItems', () => ({
+  COMPANIES_MENU_HREF: '/settings/empresas',
   getCustomerMenuItems: () => [],
   filterMenuItemsByPermissions: (items: any[]) => items,
 }));

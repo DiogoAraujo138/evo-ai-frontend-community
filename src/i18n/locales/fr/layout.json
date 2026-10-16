@@ -1,4 +1,35 @@
 {
+  "companies": {
+    "title": "Entreprises",
+    "subtitle": "Gérez les entreprises du groupe et qui peut accéder à chacune.",
+    "disabled": "Le multi-entreprise n'est pas activé sur ce serveur.",
+    "new": "Nouvelle entreprise",
+    "namePlaceholder": "Nom de l'entreprise",
+    "create": "Créer l'entreprise",
+    "created": "Entreprise créée",
+    "inactive": "inactive",
+    "users": "Utilisateurs",
+    "activate": "Activer",
+    "deactivate": "Désactiver",
+    "noUsers": "Aucun utilisateur associé.",
+    "remove": "Retirer",
+    "addUser": "Associer un utilisateur",
+    "emailPlaceholder": "E-mail de l'utilisateur",
+    "role": "Rôle",
+    "add": "Associer",
+    "linked": "Utilisateur associé",
+    "errors": {
+      "load": "Impossible de charger les entreprises.",
+      "users": "Impossible de charger les utilisateurs.",
+      "create": "Impossible de créer l'entreprise (le nom ou le slug existe-t-il ?).",
+      "update": "Impossible de mettre à jour l'entreprise.",
+      "link": "Impossible d'associer (l'utilisateur existe-t-il ?).",
+      "unlink": "Impossible de retirer l'association."
+    }
+  },
+  "company": {
+    "label": "Entreprise"
+  },
   "profile": {
     "language": "Langue",
     "myProfile": "Mon Profil",
@@ -105,6 +136,7 @@
     },
     "settings": {
       "account": "Compte",
+      "companies": "Entreprises",
       "users": "Utilisateurs",
       "teams": "Équipes",
       "labels": "Étiquettes",
