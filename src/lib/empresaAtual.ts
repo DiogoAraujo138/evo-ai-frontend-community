@@ -3,6 +3,11 @@
 export const EMPRESA_HEADER = 'X-Evo-Tenant-Id';
 const CHAVE = 'chordata.empresa_atual';
 
+export interface EmpresaBasica {
+  id: string;
+  ativa: boolean;
+}
+
 export function getEmpresaAtual(): string | null {
   try {
     return localStorage.getItem(CHAVE) || null;
@@ -25,4 +30,10 @@ export function limparEmpresaAtual(): void {
   } catch {
     // noop
   }
+}
+
+// Decide a empresa ativa: a guardada, se ainda for do usuário; senão a primeira ativa (ou a única).
+export function escolherEmpresa<T extends EmpresaBasica>(empresas: T[], guardada: string | null): T | null {
+  const ativas = empresas.filter(e => e.ativa);
+  return ativas.find(e => e.id === guardada) ?? ativas[0] ?? null;
 }
