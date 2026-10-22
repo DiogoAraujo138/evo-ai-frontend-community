@@ -4,6 +4,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useNavigate, useParams } from 'react-router-dom';
 import { CampaignType, CampaignChannelType, CampaignStatus } from '@/types/campaigns';
 import { campaignsService } from '@/services/campaigns';
+import type { BaseFilter } from '@/types/core';
 
 // Wizard components - 5 PASSOS
 import WizardProgress from './wizard/WizardProgress';
@@ -24,9 +25,12 @@ interface WizardData {
   triggerConfig?: CampaignTriggerConfig;
 
   // Step 2: AUDIÊNCIA
-  contact_selection: 'all' | 'segments' | 'tags' | '';
+  contact_selection: 'all' | 'segments' | 'tags' | 'contacts' | '';
   segment_ids?: string[];
   tag_ids?: string[];
+  contact_ids?: string[];
+  lead_filters?: BaseFilter[];
+  audience_summary?: string[];
   estimated_contacts?: number;
 
   // Step 3: CONTEÚDO
@@ -151,6 +155,15 @@ export default function NewCampaign() {
         const tagIds = asStringArray(
           wizardState.tag_ids ?? audienceState.tag_ids ?? safeSteps.tag_ids ?? campaign.tags,
         );
+        const contactIds = asStringArray(
+          wizardState.contact_ids ?? audienceState.contact_ids ?? safeSteps.contact_ids,
+        );
+        const leadFilters = Array.isArray(wizardState.lead_filters)
+          ? (wizardState.lead_filters as BaseFilter[]).filter(
+              item => item && typeof item === 'object' && typeof item.attributeKey === 'string',
+            )
+          : [];
+        const audienceSummary = asStringArray(wizardState.audience_summary);
 
         const templateIds = asStringArray(
           wizardState.template_ids ??
@@ -167,11 +180,13 @@ export default function NewCampaign() {
 
         const inferredContactSelection: WizardData['contact_selection'] = campaign.send_to_all
           ? 'all'
-          : segmentIds.length > 0
-            ? 'segments'
-            : tagIds.length > 0
-              ? 'tags'
-              : '';
+          : contactIds.length > 0
+            ? 'contacts'
+            : segmentIds.length > 0
+              ? 'segments'
+              : tagIds.length > 0
+                ? 'tags'
+                : '';
 
         const strategy = campaign.template_allocation_config?.strategy;
         const templateStrategy: WizardData['template_strategy'] =
@@ -217,6 +232,9 @@ export default function NewCampaign() {
           contact_selection: (wizardState.contact_selection || audienceState.contact_selection || inferredContactSelection) as WizardData['contact_selection'],
           segment_ids: segmentIds,
           tag_ids: tagIds,
+          contact_ids: contactIds,
+          lead_filters: leadFilters,
+          audience_summary: audienceSummary,
           estimated_contacts: campaign.contacts_count || 0,
           inbox_id: wizardState.inbox_id || contentState.inbox_id || campaign.inbox_id || '',
           template_ids: templateIds,
@@ -281,6 +299,9 @@ export default function NewCampaign() {
         contact_selection: wizardData.contact_selection,
         segment_ids: wizardData.segment_ids || [],
         tag_ids: wizardData.tag_ids || [],
+        contact_ids: wizardData.contact_ids || [],
+        lead_filters: wizardData.lead_filters || [],
+        audience_summary: wizardData.audience_summary || [],
         inbox_id: wizardData.inbox_id,
         template_ids: wizardData.template_ids || [],
         schedule_option: wizardData.schedule_option,
@@ -475,6 +496,9 @@ export default function NewCampaign() {
               contact_selection: wizardData.contact_selection,
               segment_ids: wizardData.segment_ids,
               tag_ids: wizardData.tag_ids,
+              contact_ids: wizardData.contact_ids,
+              lead_filters: wizardData.lead_filters,
+              audience_summary: wizardData.audience_summary,
               estimated_contacts: wizardData.estimated_contacts,
             }}
             onChange={handleDataChange}

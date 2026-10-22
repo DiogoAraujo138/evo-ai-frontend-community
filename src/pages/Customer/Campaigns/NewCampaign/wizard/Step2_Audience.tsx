@@ -1,259 +1,308 @@
-import { useState, useEffect } from 'react';
-import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Badge } from '@evoapi/design-system';
-import { ArrowRight, ArrowLeft, Users, Plus, X, Tag as TagIcon, Target } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Button, Label } from '@evoapi/design-system';
+import { ArrowRight, ArrowLeft, Users, Plus } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { contactsService } from '@/services/contacts';
-import { segmentsService } from '@/services/segments/segmentsService';
-import { labelsService } from '@/services/contacts/labelsService';
-import type { Segment } from '@/types/analytics';
-import type { Label as LabelType } from '@/types/settings';
+import { useContactFilterTypes } from '@/hooks/contacts/useContactFilterTypes';
+import BaseFilterRow from '@/components/base/BaseFilterRow';
+import {
+  buildContactFilterPayload,
+  MAX_CAMPAIGN_CONTACTS,
+  validLeadFilters,
+} from '@/components/contacts/contactFilterPayload';
+import { DEFAULT_CONTACT_FILTER } from '@/types/core';
+import type { BaseFilter } from '@/types/core';
 
-type FilterType = 'segment' | 'tag';
-type FilterOperator = 'include' | 'exclude';
+type AudienceMode = 'leads' | 'all' | 'legacy' | 'fixed';
 
-interface FilterCondition {
-  id: string; // unique ID for this filter condition
-  type: FilterType;
-  operator: FilterOperator;
-  value: string; // segment_id or tag_id
+export interface AudienceStepData {
+  contact_selection: 'all' | 'segments' | 'tags' | 'contacts' | '';
+  segment_ids?: string[];
+  tag_ids?: string[];
+  contact_ids?: string[];
+  lead_filters?: BaseFilter[];
+  audience_summary?: string[];
+  estimated_contacts?: number;
 }
 
 interface Step2Props {
-  data: {
-    contact_selection: 'all' | 'segments' | 'tags' | '';
-    segment_ids?: string[];
-    tag_ids?: string[];
-    estimated_contacts?: number;
-  };
-  onChange: (data: Partial<Step2Props['data']>) => void;
+  data: AudienceStepData;
+  onChange: (data: Partial<AudienceStepData>) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
+const emptyRow = (): BaseFilter => ({ ...DEFAULT_CONTACT_FILTER });
+
 const Step2_Audience = ({ data, onChange, onNext, onBack }: Step2Props) => {
   const { t } = useLanguage('campaigns');
+  const { t: tContacts } = useLanguage('contacts');
+  const { t: tCommon } = useLanguage('common');
+  const filterTypes = useContactFilterTypes(true);
+
+  const [mode, setMode] = useState<AudienceMode>('leads');
+  const [rows, setRows] = useState<BaseFilter[]>([emptyRow()]);
   const [totalContacts, setTotalContacts] = useState<number | null>(null);
-  const [segments, setSegments] = useState<Segment[]>([]);
-  const [labels, setLabels] = useState<LabelType[]>([]);
+  const [matched, setMatched] = useState<{ key: string; total: number } | null>(null);
+  const [counting, setCounting] = useState(false);
+  const [resolving, setResolving] = useState(false);
+  const [errorKey, setErrorKey] = useState<string | null>(null);
+  const ownsChanges = useRef(false);
 
-  // Fetch all data when component mounts
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [contactsRes, segmentsRes, labelsRes] = await Promise.all([
-          contactsService.getContacts({ page: 1, per_page: 1 }),
-          segmentsService.getSegments({ limit: 1000 }),
-          labelsService.getLabels(),
-        ]);
-
-        setTotalContacts(contactsRes.meta?.pagination?.total || 0);
-        setSegments(segmentsRes.data || []);
-        setLabels(labelsRes.data || []);
-      } catch (error) {
-        console.error('Error fetching audience data:', error);
-        setTotalContacts(0);
-        setSegments([]);
-        setLabels([]);
-      }
-    };
-
-    fetchData();
+    contactsService
+      .getContacts({ page: 1, per_page: 1 })
+      .then(response => setTotalContacts(response.meta?.pagination?.total || 0))
+      .catch(() => setTotalContacts(0));
   }, []);
 
-  const [useAllContacts, setUseAllContacts] = useState(data.contact_selection === 'all');
-  const [filters, setFilters] = useState<FilterCondition[]>([]);
-  const [newFilterType, setNewFilterType] = useState<FilterType>('segment');
-  const [newFilterOperator, setNewFilterOperator] = useState<FilterOperator>('include');
-  const [newFilterValue, setNewFilterValue] = useState<string>('');
-
-  // Hydrate existing audience filters when editing a campaign.
   useEffect(() => {
-    const selectedAll = data.contact_selection === 'all';
-    setUseAllContacts(selectedAll);
+    if (ownsChanges.current) return;
+    if (!data.contact_selection && !(data.lead_filters && data.lead_filters.length > 0)) return;
 
-    if (selectedAll) {
-      setFilters([]);
+    ownsChanges.current = true;
+    if (data.contact_selection === 'all') {
+      setMode('all');
+      return;
+    }
+    if (data.contact_selection === 'segments' || data.contact_selection === 'tags') {
+      setMode('legacy');
+      return;
+    }
+    if (data.contact_selection === 'contacts' && !(data.lead_filters && data.lead_filters.length > 0)) {
+      setMode('fixed');
       return;
     }
 
-    const mapIdsToFilters = (
-      ids: string[] | undefined,
-      type: FilterType,
-      startIndex: number,
-    ): FilterCondition[] =>
-      (ids || [])
-        .filter(Boolean)
-        .map((rawId, index) => {
-          const isExcluded = rawId.startsWith('!');
-          const value = isExcluded ? rawId.slice(1) : rawId;
-          return {
-            id: `hydrated_${type}_${startIndex + index}`,
-            type,
-            operator: isExcluded ? 'exclude' : 'include',
-            value,
-          } as FilterCondition;
-        })
-        .filter((filter) => !!filter.value);
-
-    const hydratedSegmentFilters = mapIdsToFilters(data.segment_ids, 'segment', 0);
-    const hydratedTagFilters = mapIdsToFilters(data.tag_ids, 'tag', hydratedSegmentFilters.length);
-    setFilters([...hydratedSegmentFilters, ...hydratedTagFilters]);
-  }, [data.contact_selection, data.segment_ids, data.tag_ids]);
-
-  const addFilter = () => {
-    if (!newFilterValue) return;
-
-    const newFilter: FilterCondition = {
-      id: `filter_${Date.now()}`,
-      type: newFilterType,
-      operator: newFilterOperator,
-      value: newFilterValue,
-    };
-
-    const updatedFilters = [...filters, newFilter];
-    setFilters(updatedFilters);
-
-    // Update parent data
-    updateParentData(updatedFilters);
-
-    // Reset form
-    setNewFilterValue('');
-  };
-
-  const removeFilter = (filterId: string) => {
-    const updatedFilters = filters.filter(f => f.id !== filterId);
-    setFilters(updatedFilters);
-    updateParentData(updatedFilters);
-  };
-
-  const updateParentData = (currentFilters: FilterCondition[]) => {
-    // Extract segment and tag IDs from filters
-    const includedSegments = currentFilters
-      .filter(f => f.type === 'segment' && f.operator === 'include')
-      .map(f => f.value);
-
-    const excludedSegments = currentFilters
-      .filter(f => f.type === 'segment' && f.operator === 'exclude')
-      .map(f => f.value);
-
-    const includedTags = currentFilters
-      .filter(f => f.type === 'tag' && f.operator === 'include')
-      .map(f => f.value);
-
-    const excludedTags = currentFilters
-      .filter(f => f.type === 'tag' && f.operator === 'exclude')
-      .map(f => f.value);
-
-    // Calculate estimated contacts (simplified logic)
-    let estimatedContacts = 0;
-    if (useAllContacts) {
-      estimatedContacts = totalContacts || 0;
-    } else if (currentFilters.length > 0) {
-      // Sum contacts from included filters
-      includedSegments.forEach(segId => {
-        const seg = segments.find(s => s.id === segId);
-        if (seg) estimatedContacts += seg.contactsCount || 0;
-      });
-      includedTags.forEach(tagId => {
-        const label = labels.find(l => l.id === tagId);
-        // Labels don't have contact count in the API, estimate based on total
-        if (label) estimatedContacts += Math.floor((totalContacts || 0) * 0.1);
-      });
-      // Subtract excluded (simplified)
-      excludedSegments.forEach(segId => {
-        const seg = segments.find(s => s.id === segId);
-        if (seg) estimatedContacts = Math.max(0, estimatedContacts - (seg.contactsCount || 0) * 0.1);
-      });
-      excludedTags.forEach(tagId => {
-        const label = labels.find(l => l.id === tagId);
-        if (label) estimatedContacts = Math.max(0, estimatedContacts - Math.floor((totalContacts || 0) * 0.05));
-      });
+    const saved = data.lead_filters && data.lead_filters.length > 0 ? data.lead_filters : [emptyRow()];
+    setMode('leads');
+    setRows(saved);
+    if (data.contact_ids && data.contact_ids.length > 0) {
+      setMatched({ key: JSON.stringify(validLeadFilters(saved)), total: data.contact_ids.length });
     }
+  }, [data.contact_selection, data.lead_filters, data.contact_ids]);
 
-    // Determine contact_selection based on filters
-    let contactSelection: 'all' | 'segments' | 'tags' | '' = '';
-    if (useAllContacts) {
-      contactSelection = 'all';
-    } else if (currentFilters.length > 0) {
-      const hasSegments = currentFilters.some(f => f.type === 'segment');
-      const hasTags = currentFilters.some(f => f.type === 'tag');
-      if (hasSegments && hasTags) {
-        contactSelection = 'segments'; // Mixed - use segments as primary
-      } else if (hasSegments) {
-        contactSelection = 'segments';
-      } else if (hasTags) {
-        contactSelection = 'tags';
+  const filterKey = JSON.stringify(validLeadFilters(rows));
+  const countReady = matched?.key === filterKey && matched.total > 0;
+
+  const markDirty = () => {
+    ownsChanges.current = true;
+    setMatched(null);
+    setErrorKey(null);
+  };
+
+  const updateRow = (index: number, field: keyof BaseFilter, value: string | number | boolean) => {
+    markDirty();
+    setRows(current => {
+      const next = [...current];
+      if (field === 'attributeKey') {
+        const filterType = filterTypes.find(item => item.attributeKey === value);
+        next[index] = {
+          ...next[index],
+          attributeKey: String(value),
+          filterOperator: filterType?.filterOperators[0]?.key || 'equal_to',
+          values: '',
+        };
+      } else {
+        next[index] = { ...next[index], [field]: value };
       }
-    }
-
-    onChange({
-      contact_selection: contactSelection,
-      segment_ids: [...includedSegments, ...excludedSegments.map(id => `!${id}`)], // Prefix excluded with !
-      tag_ids: [...includedTags, ...excludedTags.map(id => `!${id}`)], // Prefix excluded with !
+      return next;
     });
   };
 
-  const handleToggleAllContacts = (checked: boolean) => {
-    setUseAllContacts(checked);
+  const addRow = () => {
+    markDirty();
+    setRows(current => [...current, emptyRow()]);
+  };
+
+  const removeRow = (index: number) => {
+    markDirty();
+    setRows(current => (current.length === 1 ? [emptyRow()] : current.filter((_, item) => item !== index)));
+  };
+
+  const chooseAll = (checked: boolean) => {
+    ownsChanges.current = true;
+    setErrorKey(null);
     if (checked) {
-      setFilters([]);
+      setMode('all');
       onChange({
         contact_selection: 'all',
         segment_ids: [],
         tag_ids: [],
+        contact_ids: [],
+        lead_filters: [],
+        audience_summary: [],
         estimated_contacts: totalContacts || 0,
       });
-    } else {
+      return;
+    }
+    setMode('leads');
+    onChange({
+      contact_selection: '',
+      segment_ids: [],
+      tag_ids: [],
+      contact_ids: [],
+      lead_filters: [],
+      audience_summary: [],
+      estimated_contacts: 0,
+    });
+  };
+
+  const replaceLegacy = () => {
+    ownsChanges.current = true;
+    setMode('leads');
+    setRows([emptyRow()]);
+    setMatched(null);
+    setErrorKey(null);
+    onChange({
+      contact_selection: '',
+      segment_ids: [],
+      tag_ids: [],
+      contact_ids: [],
+      lead_filters: [],
+      audience_summary: [],
+      estimated_contacts: 0,
+    });
+  };
+
+  const labelFor = (filter: BaseFilter): string => {
+    const filterType = filterTypes.find(item => item.attributeKey === filter.attributeKey);
+    if (!filterType) return filter.attributeKey;
+    return filterType.attributeLabel ?? tContacts(filterType.attributeI18nKey);
+  };
+
+  const operatorFor = (filter: BaseFilter): string => {
+    const filterType = filterTypes.find(item => item.attributeKey === filter.attributeKey);
+    const operator = filterType?.filterOperators.find(item => item.key === filter.filterOperator);
+    const key = operator?.label ?? `filter.operators.${filter.filterOperator}`;
+    const fromContacts = tContacts(key);
+    return fromContacts === key ? tCommon(key) : fromContacts;
+  };
+
+  const valueFor = (filter: BaseFilter): string => {
+    if (filter.filterOperator === 'is_present' || filter.filterOperator === 'is_not_present') return '';
+    const raw = Array.isArray(filter.values) ? filter.values.map(String).join(', ') : String(filter.values ?? '');
+    const option = filterTypes
+      .find(item => item.attributeKey === filter.attributeKey)
+      ?.options?.find(item => String(item.value) === raw);
+    if (!option) return raw;
+    if (typeof option.label === 'string' && option.label.includes('.')) {
+      const translated = tContacts(option.label);
+      return translated === option.label ? raw : translated;
+    }
+    return option.label;
+  };
+
+  const summarize = (filter: BaseFilter): string => {
+    const value = valueFor(filter);
+    return value ? `${labelFor(filter)} ${operatorFor(filter)} ${value}` : `${labelFor(filter)}: ${operatorFor(filter)}`;
+  };
+
+  const countLeads = async () => {
+    const valid = validLeadFilters(rows);
+    if (valid.length === 0) {
+      setErrorKey('emptyFilters');
+      setMatched(null);
+      return;
+    }
+
+    setCounting(true);
+    setErrorKey(null);
+    try {
+      const response = await contactsService.filterContacts({
+        page: 1,
+        pageSize: 1,
+        payload: buildContactFilterPayload(valid),
+      });
+      const total = response.meta?.pagination?.total ?? 0;
+      if (total > MAX_CAMPAIGN_CONTACTS) {
+        setMatched(null);
+        setErrorKey('tooMany');
+        return;
+      }
+      if (total === 0) {
+        setMatched(null);
+        setErrorKey('noLeads');
+        return;
+      }
+      setMatched({ key: JSON.stringify(valid), total });
+    } catch (error) {
+      console.error('Error counting campaign leads:', error);
+      setMatched(null);
+      setErrorKey('countFailed');
+    } finally {
+      setCounting(false);
+    }
+  };
+
+  const continueWithLeads = async () => {
+    if (!countReady) return;
+    const valid = validLeadFilters(rows);
+    setResolving(true);
+    setErrorKey(null);
+    try {
+      const result = await contactsService.collectFilteredContactIds(
+        buildContactFilterPayload(valid),
+        MAX_CAMPAIGN_CONTACTS,
+      );
+      if (result.truncated || result.total > MAX_CAMPAIGN_CONTACTS) {
+        setErrorKey('tooMany');
+        return;
+      }
+      if (result.ids.length === 0) {
+        setErrorKey('noLeads');
+        return;
+      }
+      ownsChanges.current = true;
       onChange({
-        contact_selection: '',
+        contact_selection: 'contacts',
+        contact_ids: result.ids,
+        lead_filters: valid,
+        audience_summary: valid.map(summarize),
         segment_ids: [],
         tag_ids: [],
-        estimated_contacts: 0,
+        estimated_contacts: result.ids.length,
       });
+      onNext();
+    } catch (error) {
+      console.error('Error saving campaign lead list:', error);
+      setErrorKey('resolveFailed');
+    } finally {
+      setResolving(false);
     }
-  };
-
-  const getFilterLabel = (filter: FilterCondition) => {
-    if (filter.type === 'segment') {
-      const segment = segments.find(s => s.id === filter.value);
-      return segment?.name || filter.value;
-    } else {
-      const label = labels.find(l => l.id === filter.value);
-      return label?.title || filter.value;
-    }
-  };
-
-  const getFilterIcon = (filter: FilterCondition) => {
-    return filter.type === 'segment' ? <Target className="h-3 w-3" /> : <TagIcon className="h-3 w-3" />;
   };
 
   const handleNext = () => {
-    if (useAllContacts || filters.length > 0) {
+    if (mode === 'all' || mode === 'legacy' || mode === 'fixed') {
       onNext();
+      return;
     }
+    void continueWithLeads();
   };
 
-  const isValid = useAllContacts || filters.length > 0;
+  const canContinue = mode === 'all' || mode === 'legacy' || mode === 'fixed' || countReady;
+  const errorText =
+    errorKey === 'tooMany'
+      ? t('wizard.step2.tooMany', { max: MAX_CAMPAIGN_CONTACTS.toLocaleString('pt-BR') })
+      : errorKey
+        ? t(`wizard.step2.${errorKey}`)
+        : null;
 
   return (
     <div className="flex flex-col max-w-4xl mx-auto py-6 px-6 h-full">
       <div className="flex-1 overflow-y-auto min-h-0 px-1">
-        <div className="w-full space-y-6 max-w-2xl mx-auto pb-4">
-          {/* Header */}
+        <div className="w-full space-y-6 max-w-3xl mx-auto pb-4">
           <div>
             <h3 className="text-lg font-semibold mb-2">{t('wizard.step2.selectAudience')}</h3>
-            <p className="text-sm text-muted-foreground">
-              {t('wizard.step2.audienceDescription')}
-            </p>
+            <p className="text-sm text-muted-foreground">{t('wizard.step2.audienceDescription')}</p>
           </div>
 
-          {/* All Contacts Toggle */}
           <div className="flex items-start space-x-3 p-4 border rounded-lg">
             <input
               type="checkbox"
               id="all-contacts"
-              checked={useAllContacts}
-              onChange={(e) => handleToggleAllContacts(e.target.checked)}
+              checked={mode === 'all'}
+              onChange={event => chooseAll(event.target.checked)}
               className="mt-1"
             />
             <div className="flex-1">
@@ -263,118 +312,84 @@ const Step2_Audience = ({ data, onChange, onNext, onBack }: Step2Props) => {
               </Label>
               <p className="text-sm text-muted-foreground mt-1">
                 {t('wizard.step2.allContactsDescription')}
+                {totalContacts !== null ? ` (${totalContacts.toLocaleString('pt-BR')})` : ''}
               </p>
             </div>
           </div>
 
-          {/* Filter Builder */}
-          {!useAllContacts && (
-            <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
-              <Label className="text-base font-semibold">{t('wizard.step2.audienceFilters')}</Label>
-              <p className="text-xs text-muted-foreground">
-                {t('wizard.step2.audienceFiltersDescription')}
-              </p>
+          {mode === 'legacy' && (
+            <div className="space-y-3 p-4 border rounded-lg bg-muted/30" data-testid="campaign-legacy-audience">
+              <Label className="text-base font-semibold">{t('wizard.step2.legacyTitle')}</Label>
+              <p className="text-sm text-muted-foreground">{t('wizard.step2.legacyDescription')}</p>
+              <Button type="button" variant="outline" onClick={replaceLegacy}>
+                {t('wizard.step2.replaceWithLeadFilter')}
+              </Button>
+            </div>
+          )}
 
-              {/* Add Filter Form */}
-              <div className="grid grid-cols-12 gap-2">
-                {/* Operator */}
-                <div className="col-span-3">
-                  <Select value={newFilterOperator} onValueChange={(v) => setNewFilterOperator(v as FilterOperator)}>
-                    <SelectTrigger className="h-10">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="include">{t('wizard.step2.include')}</SelectItem>
-                      <SelectItem value="exclude">{t('wizard.step2.exclude')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+          {mode === 'fixed' && (
+            <div className="space-y-3 p-4 border rounded-lg bg-muted/30" data-testid="campaign-fixed-audience">
+              <Label className="text-base font-semibold">
+                {t('wizard.step2.fixedList', { count: data.contact_ids?.length ?? data.estimated_contacts ?? 0 })}
+              </Label>
+              <p className="text-sm text-muted-foreground">{t('wizard.step2.fixedListDescription')}</p>
+              <Button type="button" variant="outline" onClick={replaceLegacy}>
+                {t('wizard.step2.replaceWithLeadFilter')}
+              </Button>
+            </div>
+          )}
 
-                {/* Type */}
-                <div className="col-span-3">
-                  <Select value={newFilterType} onValueChange={(v) => { setNewFilterType(v as FilterType); setNewFilterValue(''); }}>
-                    <SelectTrigger className="h-10">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="segment">{t('wizard.step2.segment')}</SelectItem>
-                      <SelectItem value="tag">{t('wizard.step2.tag')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Value */}
-                <div className="col-span-5">
-                  <Select value={newFilterValue} onValueChange={setNewFilterValue}>
-                    <SelectTrigger className="h-10">
-                      <SelectValue placeholder={newFilterType === 'segment' ? t('wizard.step2.selectSegment') : t('wizard.step2.selectTag')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {newFilterType === 'segment' && segments.map(seg => (
-                        <SelectItem key={seg.id} value={seg.id}>
-                          {seg.name} ({(seg.contactsCount || 0).toLocaleString('pt-BR')})
-                        </SelectItem>
-                      ))}
-                      {newFilterType === 'tag' && labels.map(label => (
-                        <SelectItem key={label.id} value={label.id.toString()}>
-                          <span className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: label.color }} />
-                            {label.title}
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Add Button */}
-                <div className="col-span-1">
-                  <Button
-                    type="button"
-                    size="icon"
-                    onClick={addFilter}
-                    disabled={!newFilterValue}
-                    className="h-10 w-10"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
+          {mode === 'leads' && (
+            <div className="space-y-4 p-4 border rounded-lg bg-muted/30" data-testid="campaign-lead-filters">
+              <div>
+                <Label className="text-base font-semibold">{t('wizard.step2.leadFilters')}</Label>
+                <p className="text-sm text-muted-foreground mt-1">{t('wizard.step2.leadFiltersDescription')}</p>
+                <p className="text-sm text-muted-foreground mt-1">{t('wizard.step2.snapshotNotice')}</p>
               </div>
 
-              {/* Active Filters */}
-              {filters.length > 0 && (
-                <div className="space-y-2 pt-2">
-                  <Label className="text-sm font-medium">{t('wizard.step2.activeFilters')} ({filters.length})</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {filters.map(filter => (
-                      <Badge
-                        key={filter.id}
-                        variant={filter.operator === 'include' ? 'default' : 'secondary'}
-                        className="px-3 py-1.5 text-sm gap-2"
-                      >
-                        {getFilterIcon(filter)}
-                        <span className="font-medium">
-                          {filter.operator === 'include' ? t('wizard.step2.include') : t('wizard.step2.exclude')}:
-                        </span>
-                        <span>{getFilterLabel(filter)}</span>
-                        <button
-                          onClick={() => removeFilter(filter.id)}
-                          className="ml-1 hover:bg-black/10 rounded-full p-0.5"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <div className="space-y-3">
+                {rows.map((filter, index) => (
+                  <BaseFilterRow
+                    key={`lead-filter-${index}`}
+                    filter={filter}
+                    index={index}
+                    showQueryOperator={index > 0}
+                    filterTypes={filterTypes}
+                    onUpdate={updateRow}
+                    onRemove={removeRow}
+                    translationNamespace="contacts"
+                  />
+                ))}
+              </div>
 
-              {filters.length === 0 && (
-                <div className="text-center py-6 text-sm text-muted-foreground">
-                  {t('wizard.step2.noFiltersAdded')}
-                </div>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" onClick={addRow}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t('wizard.step2.addFilter')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => void countLeads()}
+                  disabled={counting || validLeadFilters(rows).length === 0}
+                  data-testid="campaign-count-leads"
+                >
+                  {counting ? t('wizard.step2.counting') : t('wizard.step2.countLeads')}
+                </Button>
+              </div>
+
+              {countReady && matched && (
+                <p className="text-sm font-medium" data-testid="campaign-lead-count">
+                  {t('wizard.step2.leadCount', { count: matched.total.toLocaleString('pt-BR') })}
+                </p>
               )}
             </div>
+          )}
+
+          {errorText && (
+            <p className="text-sm text-destructive" data-testid="campaign-audience-error">
+              {errorText}
+            </p>
           )}
         </div>
       </div>
@@ -384,8 +399,13 @@ const Step2_Audience = ({ data, onChange, onNext, onBack }: Step2Props) => {
           <ArrowLeft className="h-4 w-4" />
           {t('wizard.actions.back')}
         </Button>
-        <Button className="px-6 gap-2" onClick={handleNext} disabled={!isValid}>
-          {t('wizard.actions.continue')}
+        <Button
+          className="px-6 gap-2"
+          onClick={handleNext}
+          disabled={!canContinue || resolving}
+          data-testid="campaign-audience-continue"
+        >
+          {resolving ? t('wizard.step2.counting') : t('wizard.actions.continue')}
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>

@@ -236,6 +236,7 @@ export interface ContactsSearchParams {
 
 export interface ContactsFilterParams {
   page?: number;
+  pageSize?: number;
   payload: ContactFilter[];
 }
 

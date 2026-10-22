@@ -18,6 +18,7 @@ import { usePermissions } from '@/contexts/PermissionsContext';
 import { contactsService } from '@/services/contacts';
 import { Contact, ContactsState, ContactsListParams, ContactFormData } from '@/types/contacts';
 import { BaseFilter, AppliedFilter, CONTACT_FILTER_TYPES } from '@/types/core';
+import { buildContactFilterPayload } from '@/components/contacts/contactFilterPayload';
 import { useContactFilterOptions } from '@/hooks/contacts/useContactFilterOptions';
 import { DEFAULT_PAGE_SIZE } from '@/constants/pagination';
 
@@ -299,25 +300,8 @@ export default function Contacts() {
     }));
   };
 
-  // Build filter payload for API request
-  // Backend expects payload (not filters) and query_operator in uppercase (AND/OR)
-  const buildFilterPayload = (filters: BaseFilter[]) => {
-    const filterQuery = generateFilterQuery(filters);
-    
-    return filterQuery.map((filter, index) => {
-      const isLastFilter = index === filterQuery.length - 1;
-      const queryOperator = isLastFilter 
-        ? null 
-        : (filter.query_operator.toUpperCase() as 'AND' | 'OR');
-      
-      return {
-        attribute_key: filter.attribute_key,
-        values: filter.values,
-        filter_operator: filter.filter_operator,
-        query_operator: queryOperator,
-      };
-    });
-  };
+  // Same payload the campaign audience step sends, so both screens filter the same way.
+  const buildFilterPayload = (filters: BaseFilter[]) => buildContactFilterPayload(filters);
 
   const resolveFilterAttributeLabel = (attributeKey: string): string => {
     const filterType = CONTACT_FILTER_TYPES.find(f => f.attributeKey === attributeKey);

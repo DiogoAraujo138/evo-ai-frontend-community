@@ -124,6 +124,33 @@ class ContactsService {
     return extractResponse<Contact>(response) as ContactsResponse;
   }
 
+  /**
+   * Every contact id that matches the filter, page by page. Above `maxContacts`
+   * it returns nothing: a partial list would send the campaign to the wrong people.
+   */
+  async collectFilteredContactIds(
+    payload: ContactsFilterParams['payload'],
+    maxContacts = 10000,
+  ): Promise<{ ids: string[]; total: number; truncated: boolean }> {
+    const pageSize = 500;
+    const ids: string[] = [];
+
+    for (let page = 1; ; page++) {
+      const response = await this.filterContacts({ page, pageSize, payload });
+      const total = response.meta?.pagination?.total ?? 0;
+      if (total > maxContacts) return { ids: [], total, truncated: true };
+
+      for (const contact of response.data ?? []) {
+        if (contact?.id) ids.push(String(contact.id));
+      }
+
+      const totalPages = response.meta?.pagination?.total_pages ?? 1;
+      if (page >= totalPages || (response.data ?? []).length === 0) {
+        return { ids: [...new Set(ids)], total, truncated: false };
+      }
+    }
+  }
+
   // Get single contact
   async getContact(contactId: string, includeContactInboxes = true): Promise<Contact> {
     const response = await api.get(`/contacts/${contactId}`, {

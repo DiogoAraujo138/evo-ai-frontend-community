@@ -16,6 +16,7 @@ interface Step5Props {
     contact_selection: string;
     segment_ids?: string[];
     tag_ids?: string[];
+    audience_summary?: string[];
     estimated_contacts?: number;
 
     // Step 3: Conteúdo
@@ -175,8 +176,25 @@ const Step5_Review = ({
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Seleção:</span>
-                <span className="font-bold capitalize">{data.contact_selection}</span>
+                <span className="font-bold">
+                  {data.contact_selection === 'all'
+                    ? t('wizard.step2.allContacts')
+                    : data.contact_selection === 'contacts'
+                      ? t('wizard.step2.leadFilters')
+                      : data.contact_selection === 'segments' || data.contact_selection === 'tags'
+                        ? t('wizard.step2.legacyTitle')
+                        : data.contact_selection}
+                </span>
               </div>
+              {data.audience_summary && data.audience_summary.length > 0 && (
+                <ul className="space-y-1 text-sm">
+                  {data.audience_summary.map((line, index) => (
+                    <li key={`${line}-${index}`} className="text-muted-foreground">
+                      {line}
+                    </li>
+                  ))}
+                </ul>
+              )}
               {data.estimated_contacts && (
                 <div className="flex justify-between items-center p-3 bg-blue-500/5 rounded-lg border border-blue-500/10">
                   <span className="text-muted-foreground font-medium">Contatos estimados</span>
