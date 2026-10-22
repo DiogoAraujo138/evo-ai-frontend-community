@@ -294,6 +294,18 @@
     "searchError": "Error al buscar contactos",
     "createSuccess": "Contacto creado con éxito",
     "createError": "Error al crear contacto",
+    "saveErrors": {
+      "taken": "{{field}} ya está registrado en otro contacto de esta empresa",
+      "invalid": "{{field}} no válido",
+      "fields": {
+        "phone_number": "Teléfono",
+        "email": "Correo",
+        "identifier": "Identificador",
+        "tax_id": "ID fiscal",
+        "website": "Sitio web",
+        "name": "Nombre"
+      }
+    },
     "updateSuccess": "Contacto actualizado con éxito",
     "updateError": "Error al actualizar contacto",
     "deleteSuccess": "Contacto eliminado con éxito",

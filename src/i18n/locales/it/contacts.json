@@ -294,6 +294,18 @@
     "searchError": "Errore durante la ricerca dei contatti",
     "createSuccess": "Contatto creato con successo",
     "createError": "Errore durante la creazione del contatto",
+    "saveErrors": {
+      "taken": "{{field}} già usato da un altro contatto di questa azienda",
+      "invalid": "{{field}} non valido",
+      "fields": {
+        "phone_number": "Telefono",
+        "email": "E-mail",
+        "identifier": "Identificativo",
+        "tax_id": "Codice fiscale",
+        "website": "Sito web",
+        "name": "Nome"
+      }
+    },
     "updateSuccess": "Contatto aggiornato con successo",
     "updateError": "Errore durante l'aggiornamento del contatto",
     "deleteSuccess": "Contatto eliminato con successo",

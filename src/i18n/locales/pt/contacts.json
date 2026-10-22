@@ -302,6 +302,18 @@
     "searchError": "Erro ao buscar contatos",
     "createSuccess": "Contato criado com sucesso",
     "createError": "Erro ao criar contato",
+    "saveErrors": {
+      "taken": "{{field}} já registado(a) noutro contacto desta empresa",
+      "invalid": "{{field}} inválido(a)",
+      "fields": {
+        "phone_number": "Telefone",
+        "email": "E-mail",
+        "identifier": "Identificador",
+        "tax_id": "NIF",
+        "website": "Site",
+        "name": "Nome"
+      }
+    },
     "updateSuccess": "Contato atualizado com sucesso",
     "updateError": "Erro ao atualizar contato",
     "deleteSuccess": "Contato deletado com sucesso",

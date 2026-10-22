@@ -302,6 +302,18 @@
     "searchError": "Error searching contacts",
     "createSuccess": "Contact created successfully",
     "createError": "Error creating contact",
+    "saveErrors": {
+      "taken": "{{field}} already used by another contact in this company",
+      "invalid": "{{field}} invalid",
+      "fields": {
+        "phone_number": "Phone",
+        "email": "Email",
+        "identifier": "Identifier",
+        "tax_id": "Tax ID",
+        "website": "Website",
+        "name": "Name"
+      }
+    },
     "updateSuccess": "Contact updated successfully",
     "updateError": "Error updating contact",
     "deleteSuccess": "Contact deleted successfully",
