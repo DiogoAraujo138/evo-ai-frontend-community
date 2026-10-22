@@ -192,7 +192,15 @@ class PipelinesService {
   // Get available contacts for pipeline
   async getAvailableContacts(
     pipelineId: string,
-    params: { search?: string } = {},
+    params: {
+      search?: string;
+      labels?: string[];
+      company_id?: string;
+      has_phone?: 'true' | 'false';
+      has_email?: 'true' | 'false';
+      blocked?: 'true' | 'false';
+      limit?: number;
+    } = {},
   ): Promise<Contact[]> {
     const response = await api.get<AvailableContactsResponse>(
       `/pipelines/${pipelineId}/pipeline_items/available_contacts`,
