@@ -202,6 +202,19 @@ describe('Sidebar — collapsed + activeSubmenu', () => {
     expect(title?.textContent).toBe('Settings');
   });
 
+  it('aponta Documentacao para os fluxogramas do CRM', () => {
+    renderSidebar({ isCollapsed: false });
+    const link = screen.getByRole('link', { name: 'sidebar.footer.documentation' });
+    expect(link).toHaveAttribute('href', 'https://chordata-crm-fluxogramas.vercel.app/');
+    expect(link).toHaveAttribute('target', '_blank');
+  });
+
+  it('mantem o atalho de Documentacao quando a barra esta recolhida', () => {
+    renderSidebar({ isCollapsed: true });
+    const link = screen.getByRole('link', { name: 'sidebar.footer.documentation' });
+    expect(link).toHaveAttribute('href', 'https://chordata-crm-fluxogramas.vercel.app/');
+  });
+
   it('expanded mode renders inline submenu panel without flyout (AC #3)', () => {
     const { container } = renderSidebar({ isCollapsed: false, activeSubmenu: settingsItem });
     expect(container.querySelector('.absolute.left-16')).not.toBeInTheDocument();

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useUnansweredConversationsStore } from '@/store/unansweredConversationsStore';
 import { Link, useLocation } from 'react-router-dom';
-import { X } from 'lucide-react';
+import { BookOpen, X } from 'lucide-react';
 import {
   Button,
   TooltipProvider,
@@ -44,6 +44,7 @@ export default function Sidebar({
   const prevActiveSubmenuRef = useRef<MenuItemType | null>(null);
 
   const companyName = t('sidebar.footer.brand');
+  const documentationUrl = 'https://chordata-crm-fluxogramas.vercel.app/';
   const supportWhatsappUrl = 'https://api.whatsapp.com/send/?phone=553196219989&text=Ol%C3%A1%21+Preciso+de+suporte.&type=phone_number&app_absent=0';
 
   const totalUnanswered = useUnansweredConversationsStore((state) => state.totalUnanswered);
@@ -219,7 +220,23 @@ export default function Sidebar({
           {/* Sidebar Footer */}
           <div className="p-4 border-t border-sidebar-border">
             {isCollapsed ? (
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <a
+                      href={documentationUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={t('sidebar.footer.documentation')}
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <BookOpen className="h-4 w-4" />
+                    </a>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>{t('sidebar.footer.documentation')}</p>
+                  </TooltipContent>
+                </Tooltip>
                 <div className="text-xs text-muted-foreground text-center">© {currentYear}</div>
               </div>
             ) : (
@@ -235,7 +252,7 @@ export default function Sidebar({
                 )}
                 <div className="mt-2 flex flex-col gap-1 text-xs">
                   <a
-                    href="https://docs.evolutionfoundation.com.br/"
+                    href={documentationUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="text-muted-foreground hover:text-foreground transition-colors"
