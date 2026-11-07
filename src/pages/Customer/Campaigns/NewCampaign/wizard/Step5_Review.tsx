@@ -16,6 +16,7 @@ interface Step5Props {
     contact_selection: string;
     segment_ids?: string[];
     tag_ids?: string[];
+    audience_summary?: string[];
     estimated_contacts?: number;
 
     // Step 3: Conteúdo
@@ -177,12 +178,24 @@ const Step5_Review = ({
                 <span className="text-muted-foreground">Seleção:</span>
                 <span className="font-bold capitalize">{data.contact_selection}</span>
               </div>
-              {data.estimated_contacts && (
-                <div className="flex justify-between items-center p-3 bg-blue-500/5 rounded-lg border border-blue-500/10">
-                  <span className="text-muted-foreground font-medium">Contatos estimados</span>
-                  <span className="text-lg font-bold text-blue-600">{data.estimated_contacts.toLocaleString('pt-BR')}</span>
-                </div>
+              {data.audience_summary && data.audience_summary.length > 0 && (
+                <ul className="space-y-1 text-sm">
+                  {data.audience_summary.map((line, index) => (
+                    <li key={`${line}-${index}`} className="text-muted-foreground">
+                      {line}
+                    </li>
+                  ))}
+                </ul>
               )}
+              <div className="flex justify-between items-center p-3 bg-blue-500/5 rounded-lg border border-blue-500/10">
+                <span className="text-muted-foreground font-medium">Contatos na fila (estimativa)</span>
+                <span className="text-lg font-bold text-blue-600">
+                  {(data.estimated_contacts || 0).toLocaleString('pt-BR')}
+                </span>
+              </div>
+              <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/5 text-amber-900 dark:text-amber-100 text-sm">
+                {t('wizard.step5.humanReviewNotice')}
+              </div>
             </div>
           </div>
 

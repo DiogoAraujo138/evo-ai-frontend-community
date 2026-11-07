@@ -137,6 +137,23 @@
       },
       "edit": "Edit",
       "close": "Close"
+    },
+    "reviewQueue": {
+      "title": "Review queue before sending",
+      "description": "Review the audience for campaign \"{{name}}\" before sending. Cancel does not send anything.",
+      "descriptionEmpty": "Review the audience before sending.",
+      "loading": "Building and validating the queue...",
+      "loadError": "Could not load the queue. Please try again.",
+      "total": "Contacts in queue",
+      "sample": "Sample ({{count}})",
+      "empty": "No contacts in the queue. Adjust the audience before sending.",
+      "invalidWarning": "{{count}} invalid contact(s). Valid: {{valid}}/{{total}}. Remove invalid ones to unlock sending.",
+      "removeInvalid": "Remove invalid from queue",
+      "removingInvalid": "Removing...",
+      "removeInvalidError": "Failed to remove invalid contacts",
+      "cancel": "Cancel",
+      "confirm": "Confirm and send",
+      "confirming": "Sending..."
     }
   },
   "status": {
@@ -297,6 +314,9 @@
       "hours": "{{count}} hours",
       "hoursDay": "{{count}} hours ({{days}} day)",
       "hoursDays": "{{count}} hours ({{days}} days)"
+    },
+    "step5": {
+      "humanReviewNotice": "When you start the campaign from the list, you will review the full queue and must confirm before sending. Creating a draft does not send anything."
     },
     "actions": {
       "continue": "Continue",

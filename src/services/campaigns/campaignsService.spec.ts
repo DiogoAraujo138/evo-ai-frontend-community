@@ -96,6 +96,60 @@ const SINGLE_RESOURCE_METHODS: Array<{
     payload: CAMPAIGN,
     call: () => campaignsService.duplicateCampaign('c1'),
   },
+  {
+    name: 'estimateAudience',
+    verb: 'get',
+    args: ['/campaigns/c1/audience/estimate'],
+    payload: { estimated: 10, strategy: 'contacts' },
+    call: () => campaignsService.estimateAudience('c1'),
+  },
+  {
+    name: 'computeAudience',
+    verb: 'post',
+    args: ['/campaigns/c1/audience/compute'],
+    payload: {
+      campaignId: 'c1',
+      totalContacts: 10,
+      validContacts: 10,
+      invalidContacts: 0,
+      processingTimeMs: 1,
+      strategy: 'contacts',
+    },
+    call: () => campaignsService.computeAudience('c1'),
+  },
+  {
+    name: 'getAudiencePreview',
+    verb: 'get',
+    args: ['/campaigns/c1/audience/preview?limit=50&offset=0'],
+    payload: { contacts: [{ id: 'x', name: 'Lead' }], total: 1 },
+    call: () => campaignsService.getAudiencePreview('c1'),
+  },
+  {
+    name: 'validateAudience',
+    verb: 'post',
+    args: ['/campaigns/c1/audience/validate'],
+    payload: {
+      totalContacts: 1,
+      validContacts: 1,
+      issues: [],
+      summary: {
+        blocked: 0,
+        missingFields: 0,
+        invalidEmail: 0,
+        invalidPhone: 0,
+        duplicates: 0,
+      },
+      isValid: true,
+    },
+    call: () => campaignsService.validateAudience('c1'),
+  },
+  {
+    name: 'removeInvalidAudience',
+    verb: 'post',
+    args: ['/campaigns/c1/audience/remove-invalid'],
+    payload: { removed: 0 },
+    call: () => campaignsService.removeInvalidAudience('c1'),
+  },
 ];
 
 for (const { name, verb, args, payload, call } of SINGLE_RESOURCE_METHODS) {

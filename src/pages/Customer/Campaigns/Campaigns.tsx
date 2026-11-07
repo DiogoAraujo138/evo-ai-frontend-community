@@ -24,6 +24,7 @@ import {
   CampaignsHeader,
   CampaignsPagination,
   CampaignsTable,
+  StartCampaignReviewDialog,
 } from '@/components/campaigns';
 
 const INITIAL_STATE: CampaignsState = {
@@ -71,6 +72,9 @@ export default function Campaigns() {
   const [statsCampaign, setStatsCampaign] = useState<Campaign | null>(null);
   const [statsData, setStatsData] = useState<Campaign['stats'] | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [campaignToStart, setCampaignToStart] = useState<Campaign | null>(null);
+  const [startingCampaign, setStartingCampaign] = useState(false);
 
   // Load campaigns
   const loadCampaigns = useCallback(
@@ -215,18 +219,41 @@ export default function Campaigns() {
     }
   };
 
-  const handleStartCampaign = async (campaign: Campaign) => {
+  const handleStartCampaign = (campaign: Campaign) => {
+    // Pausada (3): retoma sem recomputar fila. Demais status: conferência humana antes do execute.
+    if (campaign.status === 3) {
+      void (async () => {
+        try {
+          await campaignsService.resumeCampaign(campaign.id);
+          toast.success(t('messages.startSuccess'));
+          loadCampaigns();
+        } catch (error) {
+          console.error('Error resuming campaign:', error);
+          toast.error(t('messages.startError'));
+        }
+      })();
+      return;
+    }
+
+    setCampaignToStart(campaign);
+    setReviewDialogOpen(true);
+  };
+
+  const confirmStartCampaign = async () => {
+    if (!campaignToStart) return;
+
+    setStartingCampaign(true);
     try {
-      if (campaign.status === 3) {
-        await campaignsService.resumeCampaign(campaign.id);
-      } else {
-        await campaignsService.executeCampaign(campaign.id);
-      }
+      await campaignsService.executeCampaign(campaignToStart.id);
       toast.success(t('messages.startSuccess'));
+      setReviewDialogOpen(false);
+      setCampaignToStart(null);
       loadCampaigns();
     } catch (error) {
       console.error('Error starting campaign:', error);
       toast.error(t('messages.startError'));
+    } finally {
+      setStartingCampaign(false);
     }
   };
 
@@ -446,6 +473,19 @@ export default function Campaigns() {
           loading={state.loading.list}
         />
       )}
+
+      <StartCampaignReviewDialog
+        open={reviewDialogOpen}
+        campaign={campaignToStart}
+        confirming={startingCampaign}
+        onOpenChange={open => {
+          setReviewDialogOpen(open);
+          if (!open) {
+            setCampaignToStart(null);
+          }
+        }}
+        onConfirm={() => void confirmStartCampaign()}
+      />
 
       {/* Delete Campaign Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

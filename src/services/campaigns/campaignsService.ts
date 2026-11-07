@@ -9,6 +9,11 @@ import type {
   CampaignStatsResponse,
   BulkCampaignActionParams,
   BulkCampaignActionResponse,
+  AudiencePreviewResult,
+  AudienceEstimateResult,
+  AudienceComputeResult,
+  AudienceValidationResult,
+  AudienceRemoveInvalidResult,
 } from '@/types/campaigns';
 
 // EVO-1838: envelope unwrapping goes through the shared apiHelpers (extractData /
@@ -119,6 +124,46 @@ class CampaignsService {
   async duplicateCampaign(campaignId: string): Promise<Campaign> {
     const response = await api.post<{ success: boolean; data: Campaign }>(`/campaigns/${campaignId}/duplicate`);
     return extractData<Campaign>(response);
+  }
+
+  // Audience — conferência humana antes do disparo
+  async estimateAudience(campaignId: string): Promise<AudienceEstimateResult> {
+    const response = await api.get<{ success: boolean; data: AudienceEstimateResult }>(
+      `/campaigns/${campaignId}/audience/estimate`,
+    );
+    return extractData<AudienceEstimateResult>(response);
+  }
+
+  async computeAudience(campaignId: string): Promise<AudienceComputeResult> {
+    const response = await api.post<{ success: boolean; data: AudienceComputeResult }>(
+      `/campaigns/${campaignId}/audience/compute`,
+    );
+    return extractData<AudienceComputeResult>(response);
+  }
+
+  async getAudiencePreview(
+    campaignId: string,
+    limit = 50,
+    offset = 0,
+  ): Promise<AudiencePreviewResult> {
+    const response = await api.get<{ success: boolean; data: AudiencePreviewResult }>(
+      `/campaigns/${campaignId}/audience/preview?limit=${limit}&offset=${offset}`,
+    );
+    return extractData<AudiencePreviewResult>(response);
+  }
+
+  async validateAudience(campaignId: string): Promise<AudienceValidationResult> {
+    const response = await api.post<{ success: boolean; data: AudienceValidationResult }>(
+      `/campaigns/${campaignId}/audience/validate`,
+    );
+    return extractData<AudienceValidationResult>(response);
+  }
+
+  async removeInvalidAudience(campaignId: string): Promise<AudienceRemoveInvalidResult> {
+    const response = await api.post<{ success: boolean; data: AudienceRemoveInvalidResult }>(
+      `/campaigns/${campaignId}/audience/remove-invalid`,
+    );
+    return extractData<AudienceRemoveInvalidResult>(response);
   }
 }
 

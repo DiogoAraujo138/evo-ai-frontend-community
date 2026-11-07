@@ -323,3 +323,56 @@ export interface BulkCampaignActionResponse extends StandardResponse<{
   message: string;
   affected_count: number;
 }> {}
+
+/** Contato hidratado no preview de audiência (Flow). */
+export interface AudiencePreviewContact {
+  id: string;
+  name: string;
+  email?: string;
+  phoneNumber?: string;
+  phone_number?: string;
+  blocked?: boolean;
+}
+
+export interface AudiencePreviewResult {
+  contacts: AudiencePreviewContact[];
+  total: number;
+}
+
+export interface AudienceEstimateResult {
+  estimated: number;
+  strategy: string;
+}
+
+export interface AudienceComputeResult {
+  campaignId: string;
+  totalContacts: number;
+  validContacts: number;
+  invalidContacts: number;
+  processingTimeMs: number;
+  strategy: string;
+}
+
+export interface AudienceValidationIssue {
+  type: 'blocked' | 'missing_field' | 'invalid_email' | 'invalid_phone' | 'duplicate';
+  contactId: string;
+  message: string;
+}
+
+export interface AudienceValidationResult {
+  totalContacts: number;
+  validContacts: number;
+  issues: AudienceValidationIssue[];
+  summary: {
+    blocked: number;
+    missingFields: number;
+    invalidEmail: number;
+    invalidPhone: number;
+    duplicates: number;
+  };
+  isValid: boolean;
+}
+
+export interface AudienceRemoveInvalidResult {
+  removed: number;
+}

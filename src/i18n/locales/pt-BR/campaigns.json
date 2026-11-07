@@ -137,6 +137,23 @@
       },
       "edit": "Editar",
       "close": "Fechar"
+    },
+    "reviewQueue": {
+      "title": "Revisar fila antes do disparo",
+      "description": "Confira a audiência da campanha \"{{name}}\" antes de enviar. Cancelar não dispara nada.",
+      "descriptionEmpty": "Confira a audiência antes de enviar.",
+      "loading": "Montando e validando a fila...",
+      "loadError": "Não foi possível carregar a fila. Tente de novo.",
+      "total": "Contatos na fila",
+      "sample": "Amostra ({{count}})",
+      "empty": "Nenhum contato na fila. Ajuste o público antes de disparar.",
+      "invalidWarning": "{{count}} contato(s) inválido(s). Válidos: {{valid}}/{{total}}. Remova os inválidos para liberar o disparo.",
+      "removeInvalid": "Remover inválidos da fila",
+      "removingInvalid": "Removendo...",
+      "removeInvalidError": "Erro ao remover contatos inválidos",
+      "cancel": "Cancelar",
+      "confirm": "Confirmar e disparar",
+      "confirming": "Disparando..."
     }
   },
   "status": {
@@ -297,6 +314,9 @@
       "hours": "{{count}} horas",
       "hoursDay": "{{count}} horas ({{days}} dia)",
       "hoursDays": "{{count}} horas ({{days}} dias)"
+    },
+    "step5": {
+      "humanReviewNotice": "Ao iniciar a campanha na lista, você verá a fila completa e precisará confirmar o disparo. Nada é enviado só por criar o rascunho."
     },
     "actions": {
       "continue": "Continuar",

@@ -5,3 +5,4 @@ export { default as CampaignStatusBadge } from './CampaignStatusBadge';
 export { default as CampaignTypeBadge } from './CampaignTypeBadge';
 export { default as CampaignChannelBadge } from './CampaignChannelBadge';
 export { default as CampaignsTable } from './CampaignsTable';
+export { StartCampaignReviewDialog } from './StartCampaignReviewDialog';
